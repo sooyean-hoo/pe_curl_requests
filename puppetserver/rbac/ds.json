@@ -14,6 +14,7 @@
     "port": 10389,
     "ssl": false,
     "start_tls": null,
+    "search_nested_groups": false,
     "type": null,
     "user_display_name_attr": "displayName",
     "user_email_attr": "mail",
