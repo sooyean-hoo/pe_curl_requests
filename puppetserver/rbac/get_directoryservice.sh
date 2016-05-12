@@ -1,6 +1,4 @@
-#!/bin/bash
-CONSOLE='split-console.puppetlabs.vm'
-
+CONSOLE='console.example.com'
 curl -k -X GET https://${CONSOLE}:4433/rbac-api/v1/ds \
   --cert $(puppet config print hostcert) \
   --key $(puppet config print hostprivkey) \
