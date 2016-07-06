@@ -54,6 +54,6 @@ $results2.search_nested_groups = [bool]$false
 #ps loves objects... really loves them.. so lets be sure we are talking the right way
 $body = $results2 | ConvertTo-Json
 
-Invoke-RestMethod -Uri "https://${servername}:4433/rbac-api/v1/ds" -Headers $headers -Method Put -Body $body -Debug 
+Invoke-RestMethod -Uri "https://${servername}:4433/rbac-api/v1/ds" -Headers $headers -Method Put -Body $body
 
 ```
