@@ -7,7 +7,7 @@ DOWNLOAD_ARCH='x86_64'
 DOWNLOAD_VERSION='latest'
 
 curl -L \
-  -o "./puppet_enterprise_${DOWNLOAD_DIST}_${DOWNLOAD_VERSION}_${DOWNLOAD_ARCH}_${DOWNLOAD_VERSION}.tar.gz" \
+  -o "./puppet_enterprise_${DOWNLOAD_DIST}_${DOWNLOAD_RELEASE}_${DOWNLOAD_ARCH}_${DOWNLOAD_VERSION}.tar.gz" \
   -C - \
   "https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=${DOWNLOAD_DIST}&rel=${DOWNLOAD_RELEASE}&arch=${DOWNLOAD_ARCH}&ver=${DOWNLOAD_VERSION}"
 
