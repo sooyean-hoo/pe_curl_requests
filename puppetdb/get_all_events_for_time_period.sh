@@ -3,6 +3,17 @@
 # time period (24 hours before right now and 24 hours after right now).
 
 PUPPETDB='pe-201620-master.puppetdebug.vlan'
+
+# Get appropriately formatted timestamps
+# NOTE: this command won't run on BSD `date` because of the -I argument,
+#       so ensure GNU date is around.
+#
+# Here's the manpage on the -I argument:
+#  -I[FMT], --iso-8601[=FMT]
+#    output  date/time  in  ISO  8601  format.   FMT='date'  for  date  only (the
+#    default), 'hours', 'minutes', 'seconds', or 'ns' for date and  time  to  the
+#    indicated precision.  Example: 2006-08-14T02:34:56-0600
+#
 TOMORROW=`date -d '+1 day' -Isec`
 YESTERDAY=`date -d '-1 day' -Isec`
 
