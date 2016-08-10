@@ -13,5 +13,5 @@ curl -X POST -H 'Content-Type: application/json' \
   --key "$(puppet config print hostprivkey)" \
   --cacert "$(puppet config print localcacert)" \
   -d @$NC_BACKUP \
-  "https://${console}:4433/classifier-api/v1/import-hierarchy"
+  "https://${CONSOLE}:4433/classifier-api/v1/import-hierarchy"
 
