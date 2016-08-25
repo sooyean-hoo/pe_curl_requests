@@ -7,8 +7,8 @@ these scripts:
 
 1. Most have a shebang at the top (`#!/bin/bash`) that are needed for
    them to be executable. Some do not. Add/remove/modify as need arises.
-2. Most ARE NOT executable, but will need to be to be executed (I'll leave
-   that as an exercise to the reader, too).
+2. Most ARE NOT executable, but will need to be MADE EXECUTABLE to be executed
+   (I'll leave that as an exercise to the reader, too).
 3. Most need to be run as `root` to access the correct Puppet certs. If you
    get an error about unauthenticated RBAC access or authentication, check
    to make sure you're running as root.
