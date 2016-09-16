@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CA='puppetca.puppetdebug.vlan'
+CA=$(puppet config print ca_name | sed 's/^.*\s//')
 NODE='mynode.puppetdebug.vlan'
 
 curl -X PUT \

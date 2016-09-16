@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PUPPETDB='puppetdb.puppetlabs.vm'
+PUPPETDB=$(puppet config print server)
 curl -X GET \
   --tlsv1 \
   --cert   $(puppet config print hostcert) \

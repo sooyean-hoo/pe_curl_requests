@@ -1,5 +1,6 @@
 #!/bin/bash
-CONSOLE='pe-385-master.puppetdebug.vlan'
+
+CONSOLE=$(puppet config print server)
 
 curl -k -X GET https://${CONSOLE}:4433/classifier-api/v1/groups \
   --cert $(puppet config print hostcert) \

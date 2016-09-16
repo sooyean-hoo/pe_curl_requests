@@ -1,6 +1,7 @@
 #!/bin/bash
 
-CONSOLE='master.puppetlabs.vm'
+CONSOLE=$(puppet config print server)
+
 curl -X GET \
   --tlsv1 \
   --cert   $(puppet config print hostcert) \

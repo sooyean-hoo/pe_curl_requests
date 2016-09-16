@@ -2,7 +2,7 @@
 # This script searches PuppetDB's events endpoint for all events between a set
 # time period (24 hours before right now and 24 hours after right now).
 
-PUPPETDB='pe-201620-master.puppetdebug.vlan'
+PUPPETDB=$(puppet config print server)
 
 # Get appropriately formatted timestamps
 # NOTE: this command won't run on BSD `date` because of the -I argument,

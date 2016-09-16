@@ -3,7 +3,7 @@
 # have been marked as 'exported' with Puppet (i.e. someone declared an exported
 # host resource like @@host { ... }). I wrote this for our Architect class, but
 # you can modify the query to do whatever you like
-PUPPETDB='puppetdb.puppetlabs.vm'
+PUPPETDB=$(puppet config print server)
 
 curl -X GET \
   --tlsv1 \

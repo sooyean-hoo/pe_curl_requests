@@ -2,6 +2,7 @@
 # Show credentials with:  `puppet access show`
 # puppet access login --service-url https://<HOSTNAME OF PUPPET ENTERPRISE CONSOLE>:4433/rbac-api --lifetime 180d
 
+CODE_MANAGER=$(puppet config print server)
 
 curl -k -X POST -H 'Content-Type: application/json' \
   -H "X-Authentication: `cat ~/.puppetlabs/token`" \
