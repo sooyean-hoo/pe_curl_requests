@@ -10,7 +10,8 @@
 # add that certificate name to auth.conf's certificate_status rule on the CA.
 #
 
-CA=$(puppet config print ca_name | sed 's/^.*\s//')
+SET_SERVER=$(puppet config print ca_name | sed 's/^.*\s//')
+CA="${CA:-$SET_SERVER}"
 NODE='test_node.puppet.vm'
 
 curl -X PUT \

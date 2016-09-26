@@ -1,6 +1,7 @@
 #!/bin/bash
 
-CONSOLE=$(puppet config print server)
+SET_SERVER=$(puppet config print server)
+CONSOLE="${CONSOLE:-$SET_SERVER}"
 NODE='yournode.puppetdebug.vlan'
 
 curl -k -X GET https://${CONSOLE}:4433/classifier-api/v1/nodes/${NODE} \

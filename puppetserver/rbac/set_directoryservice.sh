@@ -1,4 +1,5 @@
-CONSOLE='ausplpcon01.us.dell.com'
+SET_SERVER=$(puppet config pring server)
+CONSOLE="${CONSOLE:-$SET_SERVER}"
 curl -k -X PUT https://${CONSOLE}:4433/rbac-api/v1/ds \
   --cert $(puppet config print hostcert) \
   --key $(puppet config print hostprivkey) \

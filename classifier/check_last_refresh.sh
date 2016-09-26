@@ -9,7 +9,8 @@ CERT="$(puppet master   --confdir "${CONFDIR}" --configprint hostcert)"
 CACERT="$(puppet master --confdir "${CONFDIR}" --configprint localcacert)"
 PRVKEY="$(puppet master --confdir "${CONFDIR}" --configprint hostprivkey)"
 OPTIONS="--cert ${CERT} --cacert ${CACERT} --key ${PRVKEY}"
-CONSOLE="$(awk '/server: /{print $NF}' "${CONFDIR}/classifier.yaml")"
+SET_SERVER=CONSOLE="$(awk '/server: /{print $NF}' "${CONFDIR}/classifier.yaml")"
+CONSOLE="${CONSOLE:-$SET_SERVER}"
 
 /opt/puppetlabs/puppet/bin/curl -s -X GET $OPTIONS "https://${CONSOLE}:4433/classifier-api/v1/last-class-update" | python -m json.tool
 

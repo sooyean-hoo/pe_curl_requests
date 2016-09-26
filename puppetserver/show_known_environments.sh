@@ -6,7 +6,8 @@ CERT="$(puppet agent --configprint hostcert)"
 CACERT="$(puppet agent --configprint localcacert)"
 PRVKEY="$(puppet agent --configprint hostprivkey)"
 OPTIONS="--cert ${CERT} --cacert ${CACERT} --key ${PRVKEY}"
-MASTER="$(puppet agent --configprint server)"
+SET_SERVER=$(puppet agent --configprint server)
+CONSOLE="${CONSOLE:-$SET_SERVER}"
 
-/opt/puppetlabs/puppet/bin/curl -s -X GET $OPTIONS "https://${MASTER}:8140/puppet/v3/environments" | python -m json.tool
+/opt/puppetlabs/puppet/bin/curl -s -X GET $OPTIONS "https://${CONSOLE}:8140/puppet/v3/environments" | python -m json.tool
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-CONSOLE=$(puppet config print server)
+SET_SERVER=$(puppet config print server)
+CONSOLE="${CONSOLE:-$SET_SERVER}"
 
 curl -X GET \
   --tlsv1 \

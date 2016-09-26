@@ -1,6 +1,7 @@
 #!/bin/bash
 
-PUPPETDB=$(puppet config print server)
+SET_SERVER=$(puppet config print server)
+PUPPETDB="${PUPPETDB:-$SET_SERVER}"
 NODE='mynode.puppetdebug.vlan'
 
 curl -X GET \

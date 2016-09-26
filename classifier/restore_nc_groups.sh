@@ -2,7 +2,8 @@
 
 # Variables for the console node and the classifier dump file
 NC_BACKUP='node_classifier_dump.json'
-CONSOLE=$(puppet config print server)
+SET_SERVER=$(puppet config print server)
+CONSOLE="${CONSOLE:-$SET_SERVER}"
 
 # Exit if the node classifier backup file isn't found
 [[ -f $NC_BACKUP ]] || { echo "Unable to find NC backup: ${NC_BACKUP}" >&2; exit 1; }

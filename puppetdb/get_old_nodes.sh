@@ -3,7 +3,8 @@
 # The -I argument doesn't work in OS X -_-
 # Feel free to adjust the days
 CUTOFF_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ" -d '-1 day')
-PUPPETDB=$(puppet config print server)
+SET_SERVER=$(puppet config print server)
+PUPPETDB="${PUPPETDB:-$SET_SERVER}"
 
 curl -X GET \
   --tlsv1 \
