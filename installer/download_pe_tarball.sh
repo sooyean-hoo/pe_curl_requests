@@ -10,8 +10,14 @@ DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-7}
 DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-x86_64}
 DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
 
-curl -L \
-  -o "./puppet_enterprise_${DOWNLOAD_DIST}_${DOWNLOAD_RELEASE}_${DOWNLOAD_ARCH}_${DOWNLOAD_VERSION}.tar.gz" \
+tarball_name="puppet-enterprise-${DOWNLOAD_DIST}-${DOWNLOAD_VERSION}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH}.tar.gz"
+
+echo "Downloading PE $DOWNLOAD_VERSION for $DOWNLOAD_DIST-$DOWNLOAD_RELEASE-$DOWNLOAD_ARCH to: ${tarball_name}"
+echo
+
+curl --progress-bar \
+  -L \
+  -o "./${tarball_name}" \
   -C - \
   "https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=${DOWNLOAD_DIST}&rel=${DOWNLOAD_RELEASE}&arch=${DOWNLOAD_ARCH}&ver=${DOWNLOAD_VERSION}"
 
