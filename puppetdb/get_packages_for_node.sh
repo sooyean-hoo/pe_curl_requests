@@ -1,6 +1,7 @@
 #!/bin/bash
 
-PUPPETDB='puppetdb.puppetlabs.vm'
+SET_SERVER=$(puppet config print server)
+PUPPETDB="${PUPPETDB:-$SET_SERVER}"
 
 curl -X GET \
   --tlsv1 \

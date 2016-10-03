@@ -4,6 +4,9 @@
 #
 # https://docs.puppetlabs.com/puppetserver/latest/admin-api/v1/jruby-pool.html
 
+SET_SERVER=$(hostname -f)
+CONSOLE="${CONSOLE:-$SET_SERVER}"
+
 CONFDIR="$(puppet master --configprint confdir)"
 
 CERT="$(puppet master --confdir "${CONFDIR}" --configprint hostcert)"
@@ -14,4 +17,4 @@ CACERT="$(puppet master --confdir "${CONFDIR}" --configprint localcacert)"
                                 --cert "$CERT" \
                                 --key "$PRIVKEY" \
                                 --cacert "$CACERT" \
-                                "https://$(hostname -f):8140/puppet-admin-api/v1/jruby-pool"
+                                "https://${CONSOLE}:8140/puppet-admin-api/v1/jruby-pool"
