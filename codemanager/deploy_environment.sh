@@ -7,5 +7,5 @@ CODE_MANAGER="${CODE_MANAGER:-$SET_SERVER}"
 
 curl -k -X POST -H 'Content-Type: application/json' \
   -H "X-Authentication: `cat ~/.puppetlabs/token`" \
-  https://arlpupmsp01.corp.cat.com:8170/code-manager/v1/deploys \
+  "https://${CODE_MANAGER}:8170/code-manager/v1/deploys" \
   -d '{"environments": ["production"], "wait": true}'
