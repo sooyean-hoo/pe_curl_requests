@@ -1,4 +1,4 @@
-SET_SERVER=$(puppet config pring server)
+SET_SERVER=$(puppet config print server)
 CONSOLE="${CONSOLE:-$SET_SERVER}"
 curl -k -X PUT https://${CONSOLE}:4433/rbac-api/v1/ds \
   --cert $(puppet config print hostcert) \
