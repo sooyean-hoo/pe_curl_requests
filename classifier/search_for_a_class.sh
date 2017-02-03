@@ -6,8 +6,8 @@ SET_SERVER=$(puppet config print server)
 CONSOLE="${CONSOLE:-$SET_SERVER}"
 
 # Set variables for the curl.
-CERT="/etc/puppetlabs/puppet/ssl/certs/pe-internal-classifier.pem"
-KEY="/etc/puppetlabs/puppet/ssl/private_keys/pe-internal-classifier.pem"
+CERT="/etc/puppetlabs/puppet/ssl/certs/$(puppet config print certname).pem"
+KEY="/etc/puppetlabs/puppet/ssl/private_keys/$(puppet config print certname).pem"
 CACERT="/etc/puppetlabs/puppet/ssl/certs/ca.pem"
 
 /opt/puppetlabs/puppet/bin/curl -s -X GET \
