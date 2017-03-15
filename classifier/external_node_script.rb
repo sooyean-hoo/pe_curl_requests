@@ -131,7 +131,8 @@ begin
   else
     puts "Unknown render format: #{output}"
   end
-rescue
-  puts "Empty classification for #{ARGV[0]}!"
+rescue Exception => e
+  puts "Failed to retrieve classification for #{ARGV[0]}!"
+  raise e
 end
 
