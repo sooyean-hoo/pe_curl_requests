@@ -119,10 +119,10 @@ Puppet.initialize_settings(['--confdir', '/etc/puppetlabs/puppet'])
 
 begin
   data = SimpleClassifier.new.classify(ARGV[0])
-  
+
   # Don't force an environment if none is set.
   data.delete('environment') if data['environment'] == 'agent-specified'
-  
+
   case output
   when :json
     puts JSON.pretty_generate(data)
