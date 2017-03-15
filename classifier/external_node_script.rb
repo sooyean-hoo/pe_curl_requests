@@ -69,6 +69,7 @@ class SimpleClassifier
     @puppetdb = HttpClient.new(URI.parse(puppetdb['server_urls'].split(',').first))
 
     classifier = YAML.load_file(File.join(confdir, 'classifier.yaml'))
+    classifier = classifier[0] if classifier.is_a? Array
     @classifier = HttpClient.new(URI.parse("https://#{classifier['server']}:#{classifier['port']}#{classifier['prefix']}"))
   end
 
@@ -118,10 +119,10 @@ Puppet.initialize_settings(['--confdir', '/etc/puppetlabs/puppet'])
 
 begin
   data = SimpleClassifier.new.classify(ARGV[0])
-  
+
   # Don't force an environment if none is set.
   data.delete('environment') if data['environment'] == 'agent-specified'
-  
+
   case output
   when :json
     puts JSON.pretty_generate(data)
@@ -130,7 +131,8 @@ begin
   else
     puts "Unknown render format: #{output}"
   end
-rescue
-  puts "Empty classification for #{ARGV[0]}!"
+rescue Exception => e
+  puts "Failed to retrieve classification for #{ARGV[0]}!"
+  raise e
 end
 
