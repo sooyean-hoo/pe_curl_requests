@@ -69,6 +69,7 @@ class SimpleClassifier
     @puppetdb = HttpClient.new(URI.parse(puppetdb['server_urls'].split(',').first))
 
     classifier = YAML.load_file(File.join(confdir, 'classifier.yaml'))
+    classifier = classifier[0] if classifier.is_a? Array
     @classifier = HttpClient.new(URI.parse("https://#{classifier['server']}:#{classifier['port']}#{classifier['prefix']}"))
   end
 
