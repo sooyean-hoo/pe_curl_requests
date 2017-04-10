@@ -1,27 +1,33 @@
 # Console RBAC: Disable Nested Group Search
 
-When the PE console is configured to use LDAP, it can sometimes be very slow to process a login. This is because a nested group search is being performed, which is very inefficient.
+When the PE console is configured to use LDAP, it can sometimes be slow to process a login. This is because a nested-group search is being performed, which is inefficient.
 
-https://docs.puppet.com/pe/latest/rbac_dsref_v1.html#note-nested-groups
+<https://docs.puppet.com/pe/latest/rbac_dsref_v1.html#note-nested-groups>
 
-To drastically speed up LDAP login time, run the following commands:
-
+To drastically speed up LDAP login time, follow these steps:
 
 1. Grab the current LDAP config from the console:
 
 ```
-curl -k -X GET https://<YOUR_CONSOLE_MASTER>:4433/rbac-api/v1/ds -H "X-Authentication:$TOKEN" > ds.json
+# Create an RBAC token to access the API (requires pe-client-tools, or run this from the master)
+puppet-access login
+
+# Dump the RBAC directory settings to JSON
+curl -k -X GET https://<YOUR_CONSOLE_MASTER>:4433/rbac-api/v1/ds -H "X-Authentication:$(puppet-access show)" > ds.json
 ```
 
-1. Edit the resultant `ds.json` file changing only the search_nested_groups field from `true` to `false`.
-1. Post the new config to the console
+1. Edit the resultant `ds.json` file changing only the `search_nested_groups` field to `false`.
+1. POST the new config to the console
 
 ```
-curl -k https://<YOUR_CONSOLE_MASTER>:4433/rbac-api/v1/ds -H "X-Authentication:$TOKEN" -H "Content-Type: application/json" -X PUT --data @new_ds.json
+curl -k https://<YOUR_CONSOLE_MASTER>:4433/rbac-api/v1/ds -H "X-Authentication:$(puppet-access show)" -H "Content-Type: application/json" -X PUT --data @ds.json
 ```
 
-Same thing but for windows people, please written with powershell v5
-```
+## Windows
+
+Same thing but for Windows people. This requires at least PowerShell 5.
+
+```powershell
  #this is so you can trust your puppet master cert... you can trust it right?.. mine still owes me about $20
  add-type @"
     using System.Net;
@@ -41,7 +47,7 @@ $token = "dear god this is a long variable... like i get we want it unique and i
 $servername= "<YOUR_CONSOLE_MASTER>"
 
 
-#i bet there is a better way to do this too.. but hey 
+#i bet there is a better way to do this too.. but hey
 $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 $headers.Add("X-Authentication", "$token")
 $headers.Add("Content-Type", "application/json")
