@@ -22,8 +22,7 @@ function getAllVersions(){
 
 
 	  > /tmp/lst$$.txt
-	curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/${DOWNLOAD_VERSION}/ | grep href | grep puppet | sed -E 's/^.+(puppet.+tar.gz).+$/\1/g'    |  sort  -u  | tee  /tmp/lst$$.txt
-	
+	curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/${DOWNLOAD_VERSION}/ | grep href | grep puppet |   grep tar.gz   | sed -E 's/^.+(puppet.+tar.gz).+$/\1/g'    |  sort  -u  | tee  /tmp/lst$$.txt
 	
 	for  line in  $(    cat  /tmp/lst$$.txt  |  sed -E 's/.tar.gz$/ /g'     )   ; do 
 
@@ -33,23 +32,11 @@ function getAllVersions(){
 			echo $line | cut -d- -f5  >> /tmp/lst$$.txt.distV
 			echo $line | cut -d- -f6  >> /tmp/lst$$.txt.arch
  
- 
- 
-	echo  DOWNLOAD_DIST=$(         tail -1  /tmp/lst$$.txt.d          )   DOWNLOAD_RELEASE=$(   tail -1  /tmp/lst$$.txt.distV    ) DOWNLOAD_ARCH=$(        tail -1  /tmp/lst$$.txt.arch      )  DOWNLOAD_VERSION=$(   tail -1  /tmp/lst$$.txt.Version  )  \
-   $0         >>    /tmp/lst$$.txt.sh ;
-			
-	
+			echo  DOWNLOAD_DIST=$(         tail -1  /tmp/lst$$.txt.d          )   DOWNLOAD_RELEASE=$(   tail -1  /tmp/lst$$.txt.distV    ) DOWNLOAD_ARCH=$(        tail -1  /tmp/lst$$.txt.arch      )  DOWNLOAD_VERSION=$(   tail -1  /tmp/lst$$.txt.Version  )  \
+		   $0         >>    /tmp/lst$$.txt.sh ;
+
 	done  ;
 
-
-	  > /tmp/lst$$.txt.d
-	  > /tmp/lst$$.txt.distV
-	  echo ${DOWNLOAD_VERSION} > /tmp/lst$$.txt.Version
-
-
-	  > /tmp/lst$$.txt
-	curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/${DOWNLOAD_VERSION}/ | grep href | grep puppet | sed -E 's/^.+(puppet.+tar).+$/\1/g'    |  sort  -u  | tee  /tmp/lst$$.txt
-	
 	
 	for  line in  $(    cat  /tmp/lst$$.txt  |  sed -E 's/.tar$/ /g'     )   ; do 
 
