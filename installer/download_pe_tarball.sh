@@ -1,7 +1,84 @@
 #!/bin/bash
 
-if  [[ "help" == "$1" || "$1" =~  [-]+help   ]] ; then     #  ||  -z  "$1"  
+
+Dist="";
+DistV="";
+DArch="";
+
+DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
+
+if [[ $DOWNLOAD_VERSION == latest ]]; then
+  latest_released_version_number="$(curl -s http://versions.puppet.com.s3-website-us-west-2.amazonaws.com/ | tail -n1)"
+  DOWNLOAD_VERSION=${latest_released_version_number:-latest}
+fi
+
+function getAllVersions(){
+
+	 > /tmp/lst$$.txt.sh
+
+	  > /tmp/lst$$.txt.d
+	  > /tmp/lst$$.txt.distV
+	  echo ${DOWNLOAD_VERSION} > /tmp/lst$$.txt.Version
+
+
+	  > /tmp/lst$$.txt
+	curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/${DOWNLOAD_VERSION}/ | grep href | grep puppet | sed -E 's/^.+(puppet.+tar.gz).+$/\1/g'    |  sort  -u  | tee  /tmp/lst$$.txt
+	
+	
+	for  line in  $(    cat  /tmp/lst$$.txt  |  sed -E 's/.tar.gz$/ /g'     )   ; do 
+
+		echo $line     |  IFS=-     read   p e v d distV arch  ;
+
+			echo $line | cut -d- -f4  >> /tmp/lst$$.txt.d
+			echo $line | cut -d- -f5  >> /tmp/lst$$.txt.distV
+			echo $line | cut -d- -f6  >> /tmp/lst$$.txt.arch
+ 
+ 
+ 
+	echo  DOWNLOAD_DIST=$(         tail -1  /tmp/lst$$.txt.d          )   DOWNLOAD_RELEASE=$(   tail -1  /tmp/lst$$.txt.distV    ) DOWNLOAD_ARCH=$(        tail -1  /tmp/lst$$.txt.arch      )  DOWNLOAD_VERSION=$(   tail -1  /tmp/lst$$.txt.Version  )  \
+   $0         >>    /tmp/lst$$.txt.sh ;
+			
+	
+	done  ;
+
+
+	  > /tmp/lst$$.txt.d
+	  > /tmp/lst$$.txt.distV
+	  echo ${DOWNLOAD_VERSION} > /tmp/lst$$.txt.Version
+
+
+	  > /tmp/lst$$.txt
+	curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/${DOWNLOAD_VERSION}/ | grep href | grep puppet | sed -E 's/^.+(puppet.+tar).+$/\1/g'    |  sort  -u  | tee  /tmp/lst$$.txt
+	
+	
+	for  line in  $(    cat  /tmp/lst$$.txt  |  sed -E 's/.tar$/ /g'     )   ; do 
+
+		echo $line     |  IFS=-     read   p e v d distV arch  ;
+
+			echo $line | cut -d- -f4  >> /tmp/lst$$.txt.d
+			echo $line | cut -d- -f5  >> /tmp/lst$$.txt.distV
+			echo $line | cut -d- -f6  >> /tmp/lst$$.txt.arch
+ 
+ 
+ 
+			
+	
+	done  ;
+}
+
+
+if  [[   "dl" == "$1"  \
+         ||   "help" == "$1" || "$1" =~  [-]+help   ]] ;  then     #  ||  -z  "$1"  
+         
+	exitNOW="1";
+
 	cat << __END
+	
+======IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===
+You need to be on Puppet Network..  to Enjoy the Full Functions of this script.
+======IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===	
+	
+	
 # This script will download the requested version of PE from S3.
 # If no version is specified, the latest version will be used. It will
 # also resume broken downloads to save time and rename the resultant file.
@@ -10,9 +87,57 @@ if  [[ "help" == "$1" || "$1" =~  [-]+help   ]] ; then     #  ||  -z  "$1"
 # Either pass these environment variables inline or modify the default
 # values (note, it's the value after the ':-' but before the close curly brace }
 
+# All Versions of the $DOWNLOAD_VERSION PE:
+$(   getAllVersions    )
+
+#Environment variables available
+DOWNLOAD_DIST=$(  cat /tmp/lst$$.txt.d    |  sort -u | tr [:cntrl:]   ,  )
+DOWNLOAD_RELEASE=$(  cat /tmp/lst$$.txt.distV    |  sort -u | tr [:cntrl:]   ,  )
+DOWNLOAD_ARCH=$(  cat /tmp/lst$$.txt.arch   |  sort -u | tr [:cntrl:]   ,  )
+DOWNLOAD_VERSION=$(  cat /tmp/lst$$.txt.Version   |  sort -u | tr [:cntrl:]   ,  )latest
+
+E.g. 
+DOWNLOAD_DIST=el  DOWNLOAD_RELEASE=7  DOWNLOAD_ARCH=x86_64  DOWNLOAD_VERSION=latest $0 ;
+
+
+
+
+#To Get Info Other Versions of  Puppet Entreprise:
+Use DOWNLOAD_VERSION=
+
+E.g.
+DOWNLOAD_VERSION=2018.1.0   $0  help
+
+
+
+## Operation
+Download: ===BATCH Download Mode===
+    $0  dl = download all the latest versions for different distributions
+
+DOWNLOAD_VERSION=2018.1.0   $0  dl = download all the 2018.1.0 versions for different distributions
+
+=======
 
 __END
-  exit 0;
+
+if  [[   "dl" == "$1"  ]] ;  then
+	exitNOW="" ;
+	echo =========BATCH Download Mode====== DOWNLOADING ALL  $DOWNLOAD_VERSION versions for different distributions
+	  bash /tmp/lst$$.txt.sh  ;
+
+fi;
+
+
+
+	 rm /tmp/lst$$.txt.d
+	 rm  /tmp/lst$$.txt.distV
+	 rm /tmp/lst$$.txt.arch
+
+	rm  -f /tmp/lst$$.txt
+	
+	rm -f   /tmp/lst$$.txt.sh
+
+     test   -z "$exitNOW"  ||  exit 0  ;
 fi;
 
 
@@ -85,11 +210,6 @@ echo ======================
 
 
 
-if [[ $DOWNLOAD_VERSION == latest ]]; then
-  latest_released_version_number="$(curl -s http://versions.puppet.com.s3-website-us-west-2.amazonaws.com/ | tail -n1)"
-  DOWNLOAD_VERSION=${latest_released_version_number:-latest}
-fi
-
 tarball_name="puppet-enterprise-${DOWNLOAD_VERSION}-${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH}.tar.gz"
 
 echo "Downloading PE $DOWNLOAD_VERSION for ${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH} to: ${tarball_name}"
@@ -105,9 +225,7 @@ curl --progress-bar \
 ( tar  -t -f ./$tarball_name   > /dev/null    && echo  To Continue:  tar -xzvf    ./$tarball_name  )  ||   \
 {
 	rm   -f        ./$tarball_name    ;
-	echo " !!!!!!!!!!    ERROROUS DOWNLOAD : ./$tarball_name   Removed  !!!!!!!!!!!!!!!!!!!" ;
-
-
+	echo " !!!!!!!!!!    ERROROUS DOWNLOAD : ./$tarball_name   Removed  !!!!!!!!!!!!!!!!!!!" ;  
 }
 
 #for DIS in ubuntu archlinux centos  debian  brunolimaq/suse_12_1   ; do  docker run --rm -it     -v $PWD:/tmp  -w /tmp/  $DIS  /tmp/download_pe_tarball.sh   ; done
