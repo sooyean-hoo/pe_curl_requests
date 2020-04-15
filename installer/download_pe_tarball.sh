@@ -7,10 +7,12 @@ DArch="";
 
 DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
 
+if  [  "" = "$HELP" ] ; then 
 if [[ $DOWNLOAD_VERSION == latest ]]; then
   latest_released_version_number="$(curl -s http://versions.puppet.com.s3-website-us-west-2.amazonaws.com/ | tail -n1)"
   DOWNLOAD_VERSION=${latest_released_version_number:-latest}
 fi
+fi;
 
 function getAllVersions(){
 
