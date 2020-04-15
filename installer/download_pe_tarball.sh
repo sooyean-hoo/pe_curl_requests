@@ -54,7 +54,7 @@ function getAllVersions(){
 }
 
 
-if  [[   "dl" == "$1"  \
+if  [[  "" != "$HELP" ||  "dl" == "$1"  \
          ||   "help" == "$1" || "$1" =~  [-]+help   ]] ;  then     #  ||  -z  "$1"  
          
 	exitNOW="1";
