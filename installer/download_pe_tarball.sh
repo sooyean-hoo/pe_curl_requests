@@ -60,19 +60,22 @@ if  [[  "" != "$HELP" ||  "dl" == "$1"  \
 	exitNOW="1";
 
 	cat << __END
-
-E.g. 
-DOWNLOAD_DIST=el  DOWNLOAD_RELEASE=7  DOWNLOAD_ARCH=x86_64  DOWNLOAD_VERSION=latest $0 ;
-
 	
 ======IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===
-You need to be on Puppet Network..  to Enjoy the Full Functions of this script.
+You need to be on Puppet Network  aka VPN..  to Enjoy the Full Functions of this script.
 ======IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===	
 
-curl  --connect-timeout 10  http://artifactory.delivery.puppetlabs.net   > /dev/null ||  \
-	echo "========================================================================= Please get on Puppet NetWork and try again. =========================================================================" &&e exit 0; ;
+Latest Version of Puppet Entreprise is $latest_released_version_number ;
 
+
+__END
+
+aaa=$(curl  --connect-timeout 10   https://artifactory.delivery.puppetlabs.net   ) ;
+test  -z "$aaa"  &&  \
+	echo "========================================================================= Please get on Puppet NetWork aka VPN and try again.  =========================================================================" &&  exit 0 ;
 	
+	cat << __END
+ 	
 # This script will download the requested version of PE from S3.
 # If no version is specified, the latest version will be used. It will
 # also resume broken downloads to save time and rename the resultant file.
@@ -80,6 +83,9 @@ curl  --connect-timeout 10  http://artifactory.delivery.puppetlabs.net   > /dev/
 # INSTALLER CHOICES #
 # Either pass these environment variables inline or modify the default
 # values (note, it's the value after the ':-' but before the close curly brace }
+
+
+Latest Version of Puppet Entreprise is $latest_released_version_number ;
 
 # All Versions of the $DOWNLOAD_VERSION PE:
 $(   getAllVersions    )
@@ -90,6 +96,8 @@ DOWNLOAD_RELEASE=$(  cat /tmp/lst$$.txt.distV    |  sort -u | tr [:cntrl:]   ,  
 DOWNLOAD_ARCH=$(  cat /tmp/lst$$.txt.arch   |  sort -u | tr [:cntrl:]   ,  )
 DOWNLOAD_VERSION=$(  cat /tmp/lst$$.txt.Version   |  sort -u | tr [:cntrl:]   ,  )latest
 
+E.g. 
+DOWNLOAD_DIST=el  DOWNLOAD_RELEASE=7  DOWNLOAD_ARCH=x86_64  DOWNLOAD_VERSION=latest help ;
 
 
 
