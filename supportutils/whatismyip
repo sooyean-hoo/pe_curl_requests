@@ -1,0 +1,11 @@
+#!/bin/bash
+(  \
+lynx --dump http://ipecho.net/plain   ||  \
+curl ifconfig.me   ||  \
+ curl icanhazip.com   ||  \
+ curl ipecho.net/plain  ||  \
+ curl ident.me   ||  \
+ curl ipogre.com   ||  \
+ curl bot.whatismyipaddress.com    ||  \
+ wget -qO- ifconfg.me    ||  \
+ curl -s checkip.dyndns.org ) | sed -e 's/.*Current IP Address: //' -e 's/<.*$//'  
