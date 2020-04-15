@@ -7,11 +7,9 @@ DArch="";
 
 DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
 
-if  [  "" = "$HELP" ] ; then 
 if [[ $DOWNLOAD_VERSION == latest ]]; then
   latest_released_version_number="$(curl -s http://versions.puppet.com.s3-website-us-west-2.amazonaws.com/ | tail -n1)"
   DOWNLOAD_VERSION=${latest_released_version_number:-latest}
-fi
 fi;
 
 function getAllVersions(){
@@ -62,11 +60,18 @@ if  [[  "" != "$HELP" ||  "dl" == "$1"  \
 	exitNOW="1";
 
 	cat << __END
+
+E.g. 
+DOWNLOAD_DIST=el  DOWNLOAD_RELEASE=7  DOWNLOAD_ARCH=x86_64  DOWNLOAD_VERSION=latest $0 ;
+
 	
 ======IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===
 You need to be on Puppet Network..  to Enjoy the Full Functions of this script.
 ======IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===IMPT==IMPT===	
-	
+
+curl  --connect-timeout 10  http://artifactory.delivery.puppetlabs.net   > /dev/null ||  \
+	echo "========================================================================= Please get on Puppet NetWork and try again. =========================================================================" &&e exit 0; ;
+
 	
 # This script will download the requested version of PE from S3.
 # If no version is specified, the latest version will be used. It will
@@ -85,8 +90,6 @@ DOWNLOAD_RELEASE=$(  cat /tmp/lst$$.txt.distV    |  sort -u | tr [:cntrl:]   ,  
 DOWNLOAD_ARCH=$(  cat /tmp/lst$$.txt.arch   |  sort -u | tr [:cntrl:]   ,  )
 DOWNLOAD_VERSION=$(  cat /tmp/lst$$.txt.Version   |  sort -u | tr [:cntrl:]   ,  )latest
 
-E.g. 
-DOWNLOAD_DIST=el  DOWNLOAD_RELEASE=7  DOWNLOAD_ARCH=x86_64  DOWNLOAD_VERSION=latest $0 ;
 
 
 
