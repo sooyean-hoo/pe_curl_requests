@@ -54,7 +54,7 @@ function getAllVersions(){
 }
 
 
-if  [[  "" != "$HELP" ||  "dl" == "$1"  \
+if  [[  "" != "$HELP" ||  "dl" == "$1" ||  "$dl" == "all"    \
          ||   "help" == "$1" || "$1" =~  [-]+help   ]] ;  then     #  ||  -z  "$1"  
          
 	exitNOW="1";
@@ -97,7 +97,7 @@ DOWNLOAD_ARCH=$(  cat /tmp/lst$$.txt.arch   |  sort -u | tr [:cntrl:]   ,  )
 DOWNLOAD_VERSION=$(  cat /tmp/lst$$.txt.Version   |  sort -u | tr [:cntrl:]   ,  )latest
 
 E.g. 
-DOWNLOAD_DIST=el  DOWNLOAD_RELEASE=7  DOWNLOAD_ARCH=x86_64  DOWNLOAD_VERSION=latest help ;
+DOWNLOAD_DIST=el  DOWNLOAD_RELEASE=7  DOWNLOAD_ARCH=x86_64  DOWNLOAD_VERSION=latest  $0 help ;
 
 
 
@@ -115,14 +115,16 @@ Download: ===BATCH Download Mode===
     $0  dl = download all the latest versions for different distributions
 
 DOWNLOAD_VERSION=2018.1.0   $0  dl = download all the 2018.1.0 versions for different distributions
-
+DOWNLOAD_VERSION=2018.1.0 DOWNLOAD_RELEASE=7 DOWNLOAD_DIST=el   $0  dl = download all the 2018.1.0 versions for RHEL 7  distributions
+DOWNLOAD_VERSION=2018.1.0 DOWNLOAD_RELEASE=7 DOWNLOAD_DIST=el  dl=all  $0  = download all the 2018.1.0 versions for RHEL 7  distributions
 =======
 
 __END
 
-if  [[   "dl" == "$1"  ]] ;  then
+
+if  [[   "dl" == "$1"  ||  "$dl" == "all"   ]] ;  then
 	exitNOW="" ;
-	echo =========BATCH Download Mode====== DOWNLOADING ALL  $DOWNLOAD_VERSION versions for different distributions
+	echo =========BATCH Download Mode====== DOWNLOADING ALL  $DOWNLOAD_VERSION versions for different distributions ==============================================================
 	  bash /tmp/lst$$.txt.sh  ;
 
 fi;
@@ -193,21 +195,26 @@ DOWNLOAD_DIST=${DOWNLOAD_DIST:-$ID}
 DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-$VERSION_ID}
 DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-$ARCH}
 DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
-echo ======================
-
-
-
-
-
-
+echo ======DETECTED================
 cat << __END
-DOWNLOAD_DIST=${DOWNLOAD_DIST:-el}
-DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-7}
-DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-x86_64}
-DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
+DOWNLOAD_DIST=${DOWNLOAD_DIST:-UNKNOWN}
+DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-UNKNOWN}
+DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-UNKNOWN}
+DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-UNKNOWN}
 __END
 echo ======================
 
+
+( \
+[ -z "$DOWNLOAD_DIST"    ] || \
+[ -z "$DOWNLOAD_RELEASE" ] || \  
+[ -z "$DOWNLOAD_ARCH"    ] || \
+[ -z "$DOWNLOAD_VERSION" ]  ) \
+|| {
+ 	echo ===========================There are UNKNOWN parameters: AUTODETECT Fail ====================
+ 	echo Try again with HELP=Y set to see what other options
+ 	exit  0;	
+ }
 
 
 tarball_name="puppet-enterprise-${DOWNLOAD_VERSION}-${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH}.tar.gz"
