@@ -191,6 +191,17 @@ curl --help   >  /dev/null  || {
 } 
 
 
+[ -z "$DEBUG" ] || \
+{
+cat << __END
+DOWNLOAD_DIST=$ID
+DOWNLOAD_RELEASE=$VERSION_ID
+DOWNLOAD_ARCH=$ARCH
+DOWNLOAD_VERSION=$DOWNLOAD_VERSION
+__END
+}
+
+
 DOWNLOAD_DIST=${DOWNLOAD_DIST:-$ID}
 DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-$VERSION_ID}
 DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-$ARCH}
@@ -205,16 +216,17 @@ __END
 echo ======================
 
 
-( \
+(\
 [ -z "$DOWNLOAD_DIST"    ] || \
-[ -z "$DOWNLOAD_RELEASE" ] || \  
+[ -z "$DOWNLOAD_RELEASE" ] || \
 [ -z "$DOWNLOAD_ARCH"    ] || \
-[ -z "$DOWNLOAD_VERSION" ]  ) \
-|| {
+[ -z "$DOWNLOAD_VERSION" ] ) \
+&& \
+{
  	echo ===========================There are UNKNOWN parameters: AUTODETECT Fail ====================
  	echo Try again with HELP=Y set to see what other options
  	exit  0;	
- }
+}
 
 
 tarball_name="puppet-enterprise-${DOWNLOAD_VERSION}-${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH}.tar.gz"
