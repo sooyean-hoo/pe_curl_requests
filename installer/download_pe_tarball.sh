@@ -1,9 +1,12 @@
 #!/bin/bash
 
 
+
 Dist="";
 DistV="";
 DArch="";
+
+dlScript=/tmp/lst$$.txt.sh 
 
 DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
 
@@ -11,6 +14,9 @@ if [[ $DOWNLOAD_VERSION == latest ]]; then
   latest_released_version_number="$(curl -s http://versions.puppet.com.s3-website-us-west-2.amazonaws.com/ | tail -n1)"
   DOWNLOAD_VERSION=${latest_released_version_number:-latest}
 fi;
+
+
+echo "DOWNLOAD_DIST=\"$DOWNLOAD_DIST\"  DOWNLOAD_RELEASE=\"$DOWNLOAD_RELEASE\"  DOWNLOAD_ARCH=\"$DOWNLOAD_ARCH\"  DOWNLOAD_VERSION=\"$DOWNLOAD_VERSION\" " > $dlScript 
 
 function getAllVersions(){
 
@@ -32,8 +38,8 @@ function getAllVersions(){
 			echo $line | cut -d- -f5  >> /tmp/lst$$.txt.distV
 			echo $line | cut -d- -f6  >> /tmp/lst$$.txt.arch
  
-			echo  DOWNLOAD_DIST=$(         tail -1  /tmp/lst$$.txt.d          )   DOWNLOAD_RELEASE=$(   tail -1  /tmp/lst$$.txt.distV    ) DOWNLOAD_ARCH=$(        tail -1  /tmp/lst$$.txt.arch      )  DOWNLOAD_VERSION=$(   tail -1  /tmp/lst$$.txt.Version  )  \
-		   $0         >>    /tmp/lst$$.txt.sh ;
+			echo  DOWNLOAD_DIST=\"$(         tail -1  /tmp/lst$$.txt.d          )\"   DOWNLOAD_RELEASE=\"$(   tail -1  /tmp/lst$$.txt.distV    )\" DOWNLOAD_ARCH=\"$(        tail -1  /tmp/lst$$.txt.arch      )\"  DOWNLOAD_VERSION=\"$(   tail -1  /tmp/lst$$.txt.Version  )\"  \
+		       dl=    $0         >>    /tmp/lst$$.txt.sh ;
 
 	done  ;
 
@@ -54,7 +60,7 @@ function getAllVersions(){
 }
 
 
-if  [[  "" != "$HELP" ||  "dl" == "$1" ||  "$dl" == "all"    \
+if  [[  "" != "$HELP" ||  "dl" == "$1" ||  "$dl" == "batch"    \
          ||   "help" == "$1" || "$1" =~  [-]+help   ]] ;  then     #  ||  -z  "$1"  
          
 	exitNOW="1";
@@ -122,10 +128,15 @@ DOWNLOAD_VERSION=2018.1.0 DOWNLOAD_RELEASE=7 DOWNLOAD_DIST=el  dl=all  $0  = dow
 __END
 
 
-if  [[   "dl" == "$1"  ||  "$dl" == "all"   ]] ;  then
+if  [[   "dl" == "$1"  ||  "$dl" == "batch"   ]] ;  then
 	exitNOW="" ;
 	echo =========BATCH Download Mode====== DOWNLOADING ALL  $DOWNLOAD_VERSION versions for different distributions ==============================================================
-	  bash /tmp/lst$$.txt.sh  ;
+	  
+	  if [ -z "$(grep bash $dlScript )" ] ; then
+	  	bash $dlScript ;
+	  	>  $dlScript ;
+	  fi;
+	  	
 
 fi;
 
@@ -135,121 +146,137 @@ fi;
 	 rm  /tmp/lst$$.txt.distV
 	 rm /tmp/lst$$.txt.arch
 
-	rm  -f /tmp/lst$$.txt
+	 rm  -f /tmp/lst$$.txt
 	
-	rm -f   /tmp/lst$$.txt.sh
 
-     test   -z "$exitNOW"  ||  exit 0  ;
+     test   -z "$exitNOW"  ||  { rm -f $dlScript ;  exit 0 ; }   ;
 fi;
 
 
-> /tmp/vv.sh
-for i  in  /etc/*-release ;  do     cat  $i  |  grep  \=   |  tr  -d  \(\)  >>  /tmp/vv.sh  ;  done ;
-.  /tmp/vv.sh ;
-
-cat /tmp/vv.sh
-
-rm     /tmp/vv.sh
 
 
-ARCH=$(  uname -m  )
-
-#echo id =  $ID ;  
-#echo version id = $VERSION_ID ;
-#echo arch=$ARCH
 
 
-#echo u
-#cat /etc/issue
-#
-#echo net
-#cat /etc/issue.net
-#
-#uname -a
-#
-#
-#ls -l /etc
 
-[   "ubuntu"  =  "$ID"  ]  && {
-	ARCH=$(  echo $ARCH                |  sed   s/x86_64/amd64/g   )
-}
-
-
-ID=$(  echo $ID            |  sed   -e s/centos/el/g   -e s/redhat/el/g   -e  s/opensuse/sles/g   )
-
-
-curl --help   >  /dev/null  || {
-	 apt update -y && apt upgrade -y
-	apt install -y curl     ||   \
-	apt install -y php7.0-curl  || \
-	yum install --force curl	
+cat $dlScript |  sed -E "s/[^ =]+=/ /g" | \
+\
+while read  DOWNLOAD_DIST  DOWNLOAD_RELEASE  DOWNLOAD_ARCH  DOWNLOAD_VERSION SOMEBULLSHIT ; do
 	
-	 zypper install  -n curl    ||   \
-	zypper install -n php7.0-curl  
-	 
-	 curl --version   > /dev/null
-} 
+	
+	DOWNLOAD_DIST=$( echo $DOWNLOAD_DIST |  tr -d \" )  
+	DOWNLOAD_RELEASE=$( echo $DOWNLOAD_RELEASE |  tr -d \" )
+	DOWNLOAD_ARCH=$( echo $DOWNLOAD_ARCH |  tr -d \" )
+	DOWNLOAD_VERSION=$( echo $DOWNLOAD_VERSION |  tr -d \" )
 
-
-[ -z "$DEBUG" ] || \
-{
-cat << __END
-DOWNLOAD_DIST=$ID
-DOWNLOAD_RELEASE=$VERSION_ID
-DOWNLOAD_ARCH=$ARCH
-DOWNLOAD_VERSION=$DOWNLOAD_VERSION
+			> /tmp/vv.sh
+			for i  in  /etc/*-release ;  do     cat  $i  |  grep  \=   |  tr  -d  \(\)  >>  /tmp/vv.sh  ;  done ;
+			.  /tmp/vv.sh ;
+			
+			cat /tmp/vv.sh
+			
+			rm     /tmp/vv.sh
+			
+			
+			ARCH=$(  uname -m  )
+			
+			#echo id =  $ID ;  
+			#echo version id = $VERSION_ID ;
+			#echo arch=$ARCH
+			
+			
+			#echo u
+			#cat /etc/issue
+			#
+			#echo net
+			#cat /etc/issue.net
+			#
+			#uname -a
+			#
+			#
+			#ls -l /etc
+			
+			[   "ubuntu"  =  "$ID"  ]  && {
+				ARCH=$(  echo $ARCH                |  sed   s/x86_64/amd64/g   )
+			}
+			
+			
+			ID=$(  echo $ID            |  sed   -e s/centos/el/g   -e s/redhat/el/g   -e  s/opensuse/sles/g   )
+			
+			
+			curl --help   >  /dev/null  || {
+				 apt update -y && apt upgrade -y
+				apt install -y curl     ||   \
+				apt install -y php7.0-curl  || \
+				yum install --force curl	
+				
+				 zypper install  -n curl    ||   \
+				zypper install -n php7.0-curl  
+				 
+				 curl --version   > /dev/null
+			} 
+			
+			
+			[ -z "$DEBUG" ] || \
+			{
+			cat << __END
+			DOWNLOAD_DIST=$ID
+			DOWNLOAD_RELEASE=$VERSION_ID
+			DOWNLOAD_ARCH=$ARCH
+			DOWNLOAD_VERSION=$DOWNLOAD_VERSION
 __END
-}
-
-
-DOWNLOAD_DIST=${DOWNLOAD_DIST:-$ID}
-DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-$VERSION_ID}
-DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-$ARCH}
-DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
-echo ======DETECTED================
-cat << __END
-DOWNLOAD_DIST=${DOWNLOAD_DIST:-UNKNOWN}
-DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-UNKNOWN}
-DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-UNKNOWN}
-DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-UNKNOWN}
+			}
+			
+			
+			DOWNLOAD_DIST=${DOWNLOAD_DIST:-$ID}
+			DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-$VERSION_ID}
+			DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-$ARCH}
+			DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-latest}
+			echo ======DETECTED================
+			cat << __END
+			DOWNLOAD_DIST=${DOWNLOAD_DIST:-UNKNOWN}
+			DOWNLOAD_RELEASE=${DOWNLOAD_RELEASE:-UNKNOWN}
+			DOWNLOAD_ARCH=${DOWNLOAD_ARCH:-UNKNOWN}
+			DOWNLOAD_VERSION=${DOWNLOAD_VERSION:-UNKNOWN}
 __END
-echo ======================
-
-
-(\
-[ -z "$DOWNLOAD_DIST"    ] || \
-[ -z "$DOWNLOAD_RELEASE" ] || \
-[ -z "$DOWNLOAD_ARCH"    ] || \
-[ -z "$DOWNLOAD_VERSION" ] ) \
-&& \
-{
- 	echo ===========================There are UNKNOWN parameters: AUTODETECT Fail ====================
- 	echo Try again with HELP=Y set to see what other options
- 	exit  0;	
-}
-
-
-tarball_name="puppet-enterprise-${DOWNLOAD_VERSION}-${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH}.tar.gz"
-
-echo "Downloading PE $DOWNLOAD_VERSION for ${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH} to: ${tarball_name}"
-echo
-
-curl --progress-bar \
-  -L \
-  -o "./${tarball_name}" \
-  -C - \
-  "https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=${DOWNLOAD_DIST}&rel=${DOWNLOAD_RELEASE}&arch=${DOWNLOAD_ARCH}&ver=${DOWNLOAD_VERSION}"
-
-echo Begin Checking.........;
-( tar  -t -f ./$tarball_name   > /dev/null    && echo  To Continue:  tar -xzvf    ./$tarball_name  )  ||   \
-{
-	rm   -f        ./$tarball_name    ;
-	echo " !!!!!!!!!!    ERROROUS DOWNLOAD : ./$tarball_name   Removed  !!!!!!!!!!!!!!!!!!!" ;  
-}
-
-#for DIS in ubuntu archlinux centos  debian  brunolimaq/suse_12_1   ; do  docker run --rm -it     -v $PWD:/tmp  -w /tmp/  $DIS  /tmp/download_pe_tarball.sh   ; done
-
-# https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/2019.2.2/
-
-
-#curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/2019.2.2/ | grep href | grep puppet | sed -E 's/^.+(puppet.+tar).+$/\1/g'
+			echo ======================
+			
+			
+			(\
+			[ -z "$DOWNLOAD_DIST"    ] || \
+			[ -z "$DOWNLOAD_RELEASE" ] || \
+			[ -z "$DOWNLOAD_ARCH"    ] || \
+			[ -z "$DOWNLOAD_VERSION" ] ) \
+			&& \
+			{
+			 	echo ===========================There are UNKNOWN parameters: AUTODETECT Fail ====================
+			 	echo Try again with HELP=Y set to see what other options
+			 	exit  0;	
+			}
+			
+			
+			tarball_name="puppet-enterprise-${DOWNLOAD_VERSION}-${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH}.tar.gz"
+			
+			echo "Downloading PE $DOWNLOAD_VERSION for ${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH} to: ${tarball_name}"
+			echo
+			
+			curl --progress-bar \
+			  -L \
+			  -o "./${tarball_name}" \
+			  -C - \
+			  "https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=${DOWNLOAD_DIST}&rel=${DOWNLOAD_RELEASE}&arch=${DOWNLOAD_ARCH}&ver=${DOWNLOAD_VERSION}"
+			
+			echo Begin Checking.........;
+			( tar  -t -f ./$tarball_name   > /dev/null    && echo  To Continue:  tar -xzvf    ./$tarball_name  )  ||   \
+			{
+				rm   -f        ./$tarball_name    ;
+				echo " !!!!!!!!!!    ERROROUS DOWNLOAD : ./$tarball_name   Removed  !!!!!!!!!!!!!!!!!!!" ;  
+			}
+			
+			#for DIS in ubuntu archlinux centos  debian  brunolimaq/suse_12_1   ; do  docker run --rm -it     -v $PWD:/tmp  -w /tmp/  $DIS  /tmp/download_pe_tarball.sh   ; done
+			
+			# https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/2019.2.2/
+			
+			
+			#curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/2019.2.2/ | grep href | grep puppet | sed -E 's/^.+(puppet.+tar).+$/\1/g'
+done ;
+ rm -f $dlScript
