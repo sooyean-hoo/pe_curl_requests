@@ -240,7 +240,7 @@ curl --progress-bar \
   -C - \
   "https://pm.puppetlabs.com/cgi-bin/download.cgi?dist=${DOWNLOAD_DIST}&rel=${DOWNLOAD_RELEASE}&arch=${DOWNLOAD_ARCH}&ver=${DOWNLOAD_VERSION}"
 
-
+echo Begin Checking.........;
 ( tar  -t -f ./$tarball_name   > /dev/null    && echo  To Continue:  tar -xzvf    ./$tarball_name  )  ||   \
 {
 	rm   -f        ./$tarball_name    ;
