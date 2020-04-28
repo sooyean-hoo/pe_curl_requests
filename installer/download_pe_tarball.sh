@@ -122,7 +122,7 @@ Download: ===BATCH Download Mode===
 
 DOWNLOAD_VERSION=2018.1.0   $0  dl = download all the 2018.1.0 versions for different distributions
 DOWNLOAD_VERSION=2018.1.0 DOWNLOAD_RELEASE=7 DOWNLOAD_DIST=el   $0  dl = download all the 2018.1.0 versions for RHEL 7  distributions
-DOWNLOAD_VERSION=2018.1.0 DOWNLOAD_RELEASE=7 DOWNLOAD_DIST=el  dl=all  $0  = download all the 2018.1.0 versions for RHEL 7  distributions
+DOWNLOAD_VERSION=2018.1.0 DOWNLOAD_RELEASE=7 DOWNLOAD_DIST=el  dl=batch  $0  = download all the 2018.1.0 versions for RHEL 7  distributions
 =======
 
 __END
