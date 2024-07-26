@@ -18,7 +18,17 @@ function regen(){
       #echo "}" >> $regenfns
   done ;
 
-  echo 'tar -tf ./puppet*.gz > /dev/null && exit 0 ; ' >> $regenfns
+  cat >> $regenfns << _EEE
+tar -tf ./puppet*.gz > /dev/null && (
+      echo "Begin Checking........." ;
+      ( tar  -t -f $PWD/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    $(ls -1 $PWD/puppet*.gz) "  )  ||   \
+      {
+        rm   -f        $PWD/puppet*.gz    ;
+        echo " !!!!!!!!!!    ERROROUS DOWNLOAD : $(ls -1 $PWD/puppet*.gz)    Removed  !!!!!!!!!!!!!!!!!!!" ;  
+      }
+  exit 0 ;
+)
+_EEE
 
   echo "###Valentepuppet1##" >> $regenfns
 
@@ -389,7 +399,18 @@ function dlPEConsole(){
 	tar -tf ./puppet*gz ; \
     ls -ltr ./puppet*.gz   ; \
 
-tar -tf ./puppet*.gz > /dev/null && exit 0 ; 
+tar -tf ./puppet*.gz > /dev/null && (
+
+      echo Begin Checking.........;
+      ( tar  -t -f ./$tarball_name   > /dev/null    && echo  To Continue:  tar -xzvf    ./$tarball_name  )  ||   \
+      {
+        rm   -f        ./$tarball_name    ;
+        echo " !!!!!!!!!!    ERROROUS DOWNLOAD : ./$tarball_name   Removed  !!!!!!!!!!!!!!!!!!!" ;  
+      }
+
+
+  exit 0 ;
+) 
 ###Valentepuppet1##
 
 Dist="";
