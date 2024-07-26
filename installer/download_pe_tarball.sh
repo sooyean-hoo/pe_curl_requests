@@ -6,19 +6,23 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole  ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '====' >> $regenfns
       echo "}" >> $regenfns
   done ;
 
   for fname in   puppet_PuppetEntreprise_download    ;   do 
-      #echo "function $fname(){" >> $regenfns
+      echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | sed -E 's/curl /echo DISABLED: curl/g' | sed -E 's/tar -xzvf/tar -tf/g' |  grep -E -v  '====' >> $regenfns
-      #echo "}" >> $regenfns
+      echo "}" >> $regenfns
   done ;
 
   cat >> $regenfns << _EEE
+  
+    puppet_PuppetEntreprise_download \${DOWNLOAD_VERSION} \$@
+  
+  
 tar -tf ./puppet*.gz > /dev/null && (
       echo "Begin Checking........." ;
       ( tar  -t -f \$PWD/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    \$(ls -1 \$PWD/puppet*.gz) "  )  ||   \
@@ -372,6 +376,7 @@ function dlPEConsole(){
   	echoMeNRun ls -ltr puppet*.gz
   	echoMeNRun ls -lhtr puppet*.gz
 }
+function puppet_PuppetEntreprise_download(){
 	# tmpDir=""
 	tmpDir=${tmpDir:-/tmp} ;
 
@@ -399,6 +404,11 @@ function dlPEConsole(){
 	tar -tf ./puppet*gz ; \
     ls -ltr ./puppet*.gz   ; \
 
+}
+  
+    puppet_PuppetEntreprise_download ${DOWNLOAD_VERSION}
+  
+  
 tar -tf ./puppet*.gz > /dev/null && (
       echo "Begin Checking........." ;
       ( tar  -t -f $PWD/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    $(ls -1 $PWD/puppet*.gz) "  )  ||         {
