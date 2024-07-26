@@ -19,16 +19,16 @@ function regen(){
   done ;
 
   cat >> $regenfns << _EEE
+    tmpDir=\${tmpDir:-\$PWD ;
+    tmpDir=\${tmpDir} puppet_PuppetEntreprise_download \${DOWNLOAD_VERSION} \$@
   
-    puppet_PuppetEntreprise_download \${DOWNLOAD_VERSION} \$@
   
-  
-tar -tf ./puppet*.gz > /dev/null && (
+tar -tf \${tmpDir}/puppet*.gz > /dev/null && (
       echo "Begin Checking........." ;
-      ( tar  -t -f \$PWD/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    \$(ls -1 \$PWD/puppet*.gz) "  )  ||   \
+      ( tar  -t -f  \${tmpDir}D/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    \$(ls -1  \${tmpDir}/puppet*.gz) "  )  ||   \
       {
-        rm   -f        \$PWD/puppet*.gz    ;
-        echo " !!!!!!!!!!    ERROROUS DOWNLOAD : \$(ls -1 \$PWD/puppet*.gz)    Removed  !!!!!!!!!!!!!!!!!!!" ;  
+        rm   -f         \${tmpDir}/puppet*.gz    ;
+        echo " !!!!!!!!!!    ERROROUS DOWNLOAD : \$(ls -1  \${tmpDir}/puppet*.gz)    Removed  !!!!!!!!!!!!!!!!!!!" ;  
       }
   exit 0 ;
 )
@@ -405,15 +405,15 @@ function puppet_PuppetEntreprise_download(){
     ls -ltr ./puppet*.gz   ; \
 
 }
+    tmpDir=${tmpDir:-$PWD ;
+    tmpDir=${tmpDir} puppet_PuppetEntreprise_download ${DOWNLOAD_VERSION} $@
   
-    puppet_PuppetEntreprise_download ${DOWNLOAD_VERSION}
   
-  
-tar -tf ./puppet*.gz > /dev/null && (
+tar -tf ${tmpDir}/puppet*.gz > /dev/null && (
       echo "Begin Checking........." ;
-      ( tar  -t -f $PWD/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    $(ls -1 $PWD/puppet*.gz) "  )  ||         {
-        rm   -f        $PWD/puppet*.gz    ;
-        echo " !!!!!!!!!!    ERROROUS DOWNLOAD : $(ls -1 $PWD/puppet*.gz)    Removed  !!!!!!!!!!!!!!!!!!!" ;  
+      ( tar  -t -f  ${tmpDir}D/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    $(ls -1  ${tmpDir}/puppet*.gz) "  )  ||         {
+        rm   -f         ${tmpDir}/puppet*.gz    ;
+        echo " !!!!!!!!!!    ERROROUS DOWNLOAD : $(ls -1  ${tmpDir}/puppet*.gz)    Removed  !!!!!!!!!!!!!!!!!!!" ;  
       }
   exit 0 ;
 )
