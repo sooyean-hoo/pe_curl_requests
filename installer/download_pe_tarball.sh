@@ -1,6 +1,40 @@
 #!/bin/bash
 
+valentepuppetcmd="${HOME}/mym/valentepuppet/tasks/puppet_tasks_sh.ps1"
+function regen(){
+  regenfns=./.`basename $0`.regenfns.dat ;
+  echo regenfns=$regenfns= 1>&2 ;
+  echo > $regenfns
+  
+  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole ; do 
+      echo "function $fname(){" >> $regenfns
+      ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '====' >> $regenfns
+      echo "}" >> $regenfns
+  done ;
 
+  for fname in   puppet_PuppetEntreprise_download    ;   do 
+      #echo "function $fname(){" >> $regenfns
+      ${valentepuppetcmd} showFNCMDs - $fname | sed -E 's/curl /echo DISABLED: curl/g' | sed -E 's/tar -xzvf/tar -tf/g' |  grep -E -v  '====' >> $regenfns
+      #echo "}" >> $regenfns
+  done ;
+
+  echo 'tar -tf ./puppet*.gz > /dev/null && exit 0 ; ' >> $regenfns
+
+  echo "###Valentepuppet1##" >> $regenfns
+
+  awk  'BEGIN { np=0}   /^###Valentepuppet0##/ { np=2; print ;  system("cat '$regenfns'") ;  next ; }  /^###Valentepuppet1##/{ np=0;  next; }  np==0{ print }         '\
+             $0 > ./.`basename $0`.dat ;
+  #cat ./.`basename $0`.dat  >  $0  ;
+}
+if [ "regen" = "$1" ] ; then
+  regen 
+  echo -e "\n\n#===IMPT======IMPT======IMPT======IMPT======IMPT======IMPT======IMPT======IMPT===\n # To use Regen, it must be run like this at prompt '   eval \$($0 regen)   ' \n If u do not see any command after this.. then you have done it right. \n#===IMPT======IMPT======IMPT======IMPT======IMPT======IMPT======IMPT======IMPT===\n\n" 1>&2 ;
+  echo "cat ./.`basename $0`.dat >  $0" ;
+  exit 0 ;  
+fi;
+
+###Valentepuppet0##
+###Valentepuppet1##
 
 Dist="";
 DistV="";
