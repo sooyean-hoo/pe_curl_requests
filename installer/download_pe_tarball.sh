@@ -19,13 +19,14 @@ function regen(){
   done ;
 
   cat >> $regenfns << _EEE
-    tmpDir=\${tmpDir:-\$PWD ;
-    tmpDir=\${tmpDir} puppet_PuppetEntreprise_download \${DOWNLOAD_VERSION} \$@
+    tmpDir="\${tmpDir:-\$PWD}" ;
+    export tmpDir="\${tmpDir}" ;
+    puppet_PuppetEntreprise_download \${DOWNLOAD_VERSION} \$@
   
   
-tar -tf \${tmpDir}/puppet*.gz > /dev/null && (
+tar -tf  \$(ls -1  \${tmpDir}/puppet*.gz) > /dev/null && (
       echo "Begin Checking........." ;
-      ( tar  -t -f  \${tmpDir}D/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    \$(ls -1  \${tmpDir}/puppet*.gz) "  )  ||   \
+      ( tar  -t -f  \${tmpDir}/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    \$(ls -1  \${tmpDir}/puppet*.gz) "  )  ||   \
       {
         rm   -f         \${tmpDir}/puppet*.gz    ;
         echo " !!!!!!!!!!    ERROROUS DOWNLOAD : \$(ls -1  \${tmpDir}/puppet*.gz)    Removed  !!!!!!!!!!!!!!!!!!!" ;  
@@ -405,13 +406,14 @@ function puppet_PuppetEntreprise_download(){
     ls -ltr ./puppet*.gz   ; \
 
 }
-    tmpDir=${tmpDir:-$PWD ;
-    tmpDir=${tmpDir} puppet_PuppetEntreprise_download ${DOWNLOAD_VERSION} $@
+    tmpDir="${tmpDir:-$PWD}" ;
+    export tmpDir="${tmpDir}" ;
+    puppet_PuppetEntreprise_download ${DOWNLOAD_VERSION} $@
   
   
-tar -tf ${tmpDir}/puppet*.gz > /dev/null && (
+tar -tf  $(ls -1  ${tmpDir}/puppet*.gz) > /dev/null && (
       echo "Begin Checking........." ;
-      ( tar  -t -f  ${tmpDir}D/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    $(ls -1  ${tmpDir}/puppet*.gz) "  )  ||         {
+      ( tar  -t -f  ${tmpDir}/puppet*.gz    > /dev/null    && echo  "To Continue:  tar -xzvf    $(ls -1  ${tmpDir}/puppet*.gz) "  )  ||         {
         rm   -f         ${tmpDir}/puppet*.gz    ;
         echo " !!!!!!!!!!    ERROROUS DOWNLOAD : $(ls -1  ${tmpDir}/puppet*.gz)    Removed  !!!!!!!!!!!!!!!!!!!" ;  
       }
