@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole  ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole         installPEConsole   ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '====' >> $regenfns
       echo "}" >> $regenfns
@@ -371,6 +371,412 @@ function dlPEConsole(){
 	echoMsg :: In $PWD now
   	echoMeNRun ls -ltr puppet*.gz
   	echoMeNRun ls -lhtr puppet*.gz
+}
+function installPEConsole(){
+
+  tmpDir=${tmpDir:-/tmp} ;
+
+  issues=()
+
+  stageflags="$@"
+  [[ "$puppet_paras" =~  ^= ]] || stageflags="$(echo $stageflags | sed -E 's/^[^=]+//g')"  ;
+  stageflags=${stageflags:-=SETVALUES==PRECHECK==UNTAR==PRECONFIG==PRECONFIG2==INSTALL=}
+
+  # stageflags=${stageflags:-=SETVALUES==PRECHECK==UNTAR==PRECONFIG==PRECONFIG2==PREP=}   # Run the prepmode of the installer
+
+
+
+
+  			   sudo ls -l  ${tmpDir}/installPEConsole.SETVALUES.txt > /dev/null || \
+			    issues[${#issues[@]}]=" @Missing setvalue: ${tmpDir}/installPEConsole.SETVALUES.txt"
+
+  [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] && source  ${tmpDir}/installPEConsole.SETVALUES.txt  && catMe  ${tmpDir}/installPEConsole.SETVALUES.txt ;
+
+  srcgitKey=${srcgitKey:-${tmpDir}/occkeys}
+  gitKey=${gitKey:-\"/etc/puppetlabs/puppetserver/ssh/id-control_repo.rsa\"}
+  gitURL=${gitURL:-\"git@github.com:sooyean-hoo/control-repo.git\"}              ## "ssh://git@gitlab.sooyean.com:8022/sooyean.hoo/control-repo.git"
+  adminpasswd=${adminpasswd:-\"welcome1\"}
+  dnsaltnames=${dnsaltnames:-[\"puppet\",\"peconsole_aws\",\"centos7.localdomain\"]}
+  codeMgrConf=${codeMgrConf:-true};
+
+#   srcgitKey='${tmpDir}/occkey'
+#   gitKey='"/etc/puppetlabs/puppetserver/ssh/id-control_repo.rsa"'
+#   gitURL='"git@github.com:sooyean-hoo/control-repo.git"'              ## "ssh://git@gitlab.sooyean.com:8022/sooyean.hoo/control-repo.git"
+#   adminpasswd='"welcome1"'
+#   dnsaltnames='["puppet","peconsole_aws","centos7.localdomain"]'
+#   codeMgrConf='true';
+
+#   puppet_master_host='puppet'
+
+  eval  $(  grep -A50  -F 'function installPEConsole()' $0 | grep -E   '^#'| sed -E 's/=/   /g' | awk -F' ' '{print "echoMsg :: "$2"=\$"$2";     " }'  | tr -d '[:cntrl:]'    )  ;
+
+  if  [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] ; then
+	grep =  ${tmpDir}/installPEConsole.SETVALUES.txt | cut -d= -f1 | tr -d  ' '   | xargs -L 1  -I{}  bash -c "echo {}=\${} "
+  fi;
+
+  [[  $stageflags  =~ =PRECHECK= ]] || exit 0 ;
+
+
+        eval "sudo ls -l ${srcgitKey//\"/} " > /dev/null ; errorid=$? ;
+        sudo ls -l  ${srcgitKey//\"/} > /dev/null ;
+            test 0$?$errorid -eq 0 || issues[${#issues[@]}]=" @Missing srcgitKey: $srcgitKey "
+
+        eval "sudo ls -l ${gitKey//\"/} "  > /dev/null ; errorid=$? ;
+        sudo ls -l  ${gitKey//\"/} > /dev/null;
+            test 0$?$errorid -eq 0 || issues[${#issues[@]}]=" @Missing gitKey: $gitKey "
+
+
+		sudo ls -1tra ${tmpDir}/puppet-enterprise*.tar.gz
+
+		targz2use_=`ls -1tra ${tmpDir}/puppet-enterprise*.tar.gz  | tail -n 1`
+		targz2use=${targz2use:-$targz2use_}         # May be overwritten by  ${tmpDir}/installPEConsole.SETVALUES.txt
+
+
+  	echo ${issues[@]}
+
+  if [ ! -e ${srcgitKey//\"/} ] ; then
+  	if [[  $stageflags  =~ =PREP=   ]] ; then
+		echoMsg %% SKIPPED CHECK for Missing $srcgitKey, as it is doing =PREP=
+  	else
+	    echoMsg %% "\n\n\nFATAL Missing $srcgitKey.. Please upload to ${tmpDir}" ;
+	    exit 0;
+    fi;
+  fi;
+
+
+  if [ -z "$(ls  ${tmpDir}/puppet-enterprise*.tar.gz  )" ] ; then
+    echoMsg %% "\n\n\nFATAL Missing tar files.. Please upload to ${tmpDir} " ;
+    echoMeNRun ls -l ${tmpDir}/puppet-enterprise*.tar.gz
+    exit 0;
+  fi;
+
+ [[  $stageflags  =~ =UNTAR= ]] || exit 0 ;
+
+  cd ${tmpDir}
+  test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
+
+  tar -tf "$targz2use" 2>&1  > /dev/null ||  echoMsg %% "\n\n\nFATAL Error extracting $targz2use.. Please ensure the tar file is not corrupted in ${tmpDir} " ;
+  echoMeNRun tar -xzvf "$targz2use"
+
+  if [ -z "$targz2use"  -o   0 -ne  0$? -o  -z "`ls -l ${tmpDir}/puppet-enterprise*`" ] ; then
+	echoMsg %% "\n\n\nFATAL Error extracting $targz2use.. Please ensure the tar file is not corrupted in ${tmpDir} " ;
+	echoMeNRun ls -ld ${targz2use:-puppet-enterprise*}
+    exit 0;
+  fi;
+
+
+
+  if [[  $stageflags  =~ =SETHOCONFVALUES= ]]  ; then
+    if [ -e ${tmpDir}/installPEConsole.SETVALUES.conf ] ; then
+#	[ -e ${tmpDir}/installPEConsole.SETVALUES.conf ] && source  ${tmpDir}/installPEConsole.SETVALUES.conf  && catMe  ${tmpDir}/installPEConsole.SETVALUES.conf ;
+
+	  cd ${tmpDir}
+	  test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
+
+  	  installer=$PWD/$(find -iname '*-installer')
+      cd $(dirname "$installer" )
+  	  sudo su - << __END
+ $installer -y -p
+__END
+		echoMsg '==' $installer -y -p
+
+
+
+	  [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] && source  ${tmpDir}/installPEConsole.SETVALUES.txt  && catMe  ${tmpDir}/installPEConsole.SETVALUES.txt ;
+############### PECONF.TEMPLATE
+#  "pe_install::puppet_master_dnsaltnames": dnsaltnames
+#  "puppet_enterprise::profile::master::r10k_remote": gitURL
+#  "puppet_enterprise::profile::master::code_manager_auto_configure": codeMgrConf
+#  "puppet_enterprise::profile::master::r10k_private_key": gitKey
+#  "console_admin_password": adminpasswd
+#
+#  "puppet_enterprise::puppet_master_host"
+#  "pe_install::install::classification::pe_node_group_environment"
+#  "puppet_enterprise::ipv6_only"
+#  "puppet_enterprise::master::recover_configuration::pe_environment"
+#  "puppet_enterprise::profile::certificate_authority"
+#  "puppet_enterprise::profile::master::check_for_updates"
+#  "puppet_enterprise::profile::master::r10k_known__hosts"
+#  "puppet_enterprise::profile::console::classifier_synchronization_period"
+#  "puppet_enterprise::profile::console::ldap_sync_period_seconds"
+#  "puppet_enterprise::profile::console::ldap_cipher_suites"
+#  "puppet_enterprise::profile::console::rbac_failed_attempts_lockout"
+#  "puppet_enterprise::profile::console::rbac_password_reset_expiration"
+#  "puppet_enterprise::profile::console::rbac_session_timeout"
+#  "puppet_enterprise::profile::console::session_maximum_lifetime"
+#  "puppet_enterprise::profile::console::session_timeout_warning_seconds"
+#  "puppet_enterprise::profile::console::session_timeout_polling_frequency_seconds"
+#  "puppet_enterprise::profile::console::rbac_token_auth_lifetime"
+#  "puppet_enterprise::profile::console::rbac_token_maximum_lifetime"
+#  "puppet_enterprise::profile::console::console_ssl_listen_port"
+#  "puppet_enterprise::profile::console::ssl_listen_address"
+#  "puppet_enterprise::profile::console::classifier_prune_threshold"
+#  "puppet_enterprise::profile::console::classifier_node_check_in_storage"
+#  "puppet_enterprise::profile::console::display_local_time"
+#  "puppet_enterprise::profile::console::disclaimer_content_path"
+#  "puppet_enterprise::api_port"
+#  "puppet_enterprise::console_services::no_longer_reporting_cutoff"
+#
+#####################
+
+      conftmp=`mktemp`
+ 	  peconf=$PWD/$(find -iname pe.conf)
+
+      #cp  ${tmpDir}/installPEConsole.SETVALUES.conf   $conftmp
+      cat  $peconf > $conftmp
+
+	  cat ${tmpDir}/installPEConsole.SETVALUES.txt |sed -E 's/;/\n/g'| sed -E 's/=.+$//g'| tr -d ' ' | while read commonvalue ; do
+		  [ -z   "`set |grep $commonvalue | sed -E 's/^.+=//'`" ] && continue
+
+		  confpropname="$( grep   ": $commonvalue"   $0 | sed -E 's/: .+$//g'| tr -d '# ' )"
+		  if [ -z "$confpropname" ] ; then
+		    confpropname="$(    grep '::'$commonvalue'"' ./puppet_tasks_sh.ps1 | sed -E 's/: .+$//g'| tr -d '# '         )"
+		  fi;
+
+		  echoMsg '==' "Running.... /opt/puppetlabs/installer/bin/hocon -f $conftmp set         '${confpropname}'   `set |grep ${commonvalue}= | sed -E s/^.+=// | head -1`  "
+		        echo "/opt/puppetlabs/installer/bin/hocon -f $conftmp set         '${confpropname}'   `set |grep ${commonvalue}= | sed -E s/^.+=// | head -1`  "  | bash -
+
+	  done;
+
+	  catMe $conftmp
+
+	  echoMeNRun sudo mv -f  $conftmp 	$peconf.NEWCONF || cat  $conftmp >  $peconf.NEWCONF
+
+	 cd ${tmpDir}
+	 test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
+
+#	  uninstaller=$PWD/$(find -iname '*-uninstaller')
+#  	  cd $(dirname "$uninstaller" )
+#  	  sudo su - << __END
+# $uninstaller -y
+#__END
+#		echoMsg '==' $uninstaller -y
+
+    fi;
+  fi;
+
+
+  [[  $stageflags  =~ =PRECONFIG= ]] || exit 0 ;
+
+  cd ${tmpDir}
+  test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
+
+  peconf=$PWD/$(find -iname pe.conf)
+
+  cat $peconf  | \
+  sed  -E 's/^[^"]+("[^"]+private_key":)(.+)$/            \1 \${gitKey}/g'         | \
+  sed  -E 's/^[^"]+("[^"]+r10k_remote":)(.+)$/            \1 \${gitURL}/g'         | \
+  \
+  sed  -E 's/^[^"]+("[^"]+admin_password":)(.+)$/            \1 \${adminpasswd}/g' | \
+  \
+  sed  -E 's/^[^"]+("[^"]+dnsaltnames":)(.+)$/            \1 \${dnsaltnames}/g' | \
+  \
+  sed  -E 's/^[^"]+("[^"]+configure":)(.+)$/            \1 \${codeMgrConf}/g'  >  $peconf.tmp ;
+
+  if [  ! -z  "$puppet_master_host" ] ; then
+  	  cp $peconf.tmp  $peconf.tmp1 ;
+  	  cat $peconf.tmp1  | \
+  	  sed  -E 's/^[^"]+("[^"]+puppet_master_host":)(.+)$/            \1 \${puppet_master_host}/g'  >  $peconf.tmp ;
+  	  rm -f $peconf.tmp1   ;
+  fi;
+
+  if [ -z "$(ls  `dirname "$peconf"`/pe.conf  )" ] ; then
+	echoMsg %% "\n\n\nFATAL Missing pe.conf files.. Please ensure the tar file is not corrupted and extracted in ${tmpDir} " ;
+	echoMeNRun ls -l `dirname "$peconf"`/pe.conf
+    exit 0;
+  fi;
+
+  > $peconf.NEW
+  cat  $peconf.tmp | while read line ; do
+    if [[  $line =~ \$  ]] ; then
+      eval "echo \"    \"\\\"$line  \" #configured Sooyean\"   " |sed -E 's/: /": /g'  >> $peconf.NEW   ;
+#                eval "echo \"    \"\\\"$line  \" #configured Sooyean\"   "
+#                eval "echo \"    \"\\\"$line  \" #configured Sooyean\"   " | sed -E 's/: /": /g'
+    else
+      echo $line   >> $peconf.NEW   ;
+    fi;
+  done;
+
+  rm -f $peconf.tmp
+
+  catMe $peconf.NEW  ;
+  echoMsg %% Changes
+  grep Sooyean  $peconf.NEW ;
+  echoMsg %%
+
+  sleep 5 ;
+
+
+  sudo su - << __END
+  mkdir -p $(dirname "$gitKey" )
+  cp ${srcgitKey}  $(dirname "$gitKey" )
+  cd $(dirname "$gitKey" )
+  mv $(basename ${srcgitKey}) ./ $(basename "$gitKey" )
+
+    eval "   cp $srcgitKey $gitKey "
+    eval "   chown pe-puppet:pe-puppet  $gitKey "
+    eval "ls -l  $gitKey"
+
+  exit
+__END
+
+  sudo mkdir -p $(dirname "$gitKey" )
+  cp ${srcgitKey}  $(dirname "$gitKey" )
+  mv $(basename ${srcgitKey}) ./ $(basename "$gitKey" )
+
+	eval "sudo ls -l ${srcgitKey//\"/} " > /dev/null ; errorid=$? ;
+	sudo ls -l  ${srcgitKey//\"/} > /dev/null ;
+	    test 0$?$errorid -eq 0 || issues[${#issues[@]}]=" @Missing srcgitKey: $srcgitKey "
+
+	eval "sudo ls -l ${gitKey//\"/} "  > /dev/null ; errorid=$? ;
+	sudo ls -l  ${gitKey//\"/} > /dev/null;
+	    test 0$?$errorid -eq 0 || issues[${#issues[@]}]=" @Missing gitKey: $gitKey "
+
+
+			     sed -i -E 's/(^.+"-".+$)/#DISABLED BY Sooyean            \1/g'     $peconf.NEW
+
+
+  if [[  $stageflags  =~ =USEHOCONFVALUES= ]]  ; then
+    if [ -e $peconf.NEWCONF ] ; then
+
+		cp -f $peconf.NEWCONF  $peconf.NEW
+
+		echoMsg :: Customisations
+		echoMsg '==' "Running.... grep -E -v '^( *)?#|^\$'   $peconf.NEW"
+				      grep -E -v '^( *)?#|^$'   $peconf.NEW
+
+    fi
+  fi
+
+  [[  $stageflags  =~ =PRECONFIG2= ]] || exit 0 ;
+
+    tmppeconf=$peconf.NEW.2
+
+    #### Remove } and option which are '-'
+    grep -E -v '^}'  $peconf.NEW  |  sed -E 's/("[^"]+"[ ]*:[ ]*[-])/#DISABLED BY Sooyean            \1/g'   > $tmppeconf
+
+    cat >> $tmppeconf <<__EMD
+  #------------------------------------------------------------------------------------------------------------------------------
+  # CUSTOM CONFIGs from ${tmpDir}/*yaml.conf
+  #
+  # Added by Sooyean
+  #
+  # If it is for multi repo, Please run by  configOLDPuppet_r10K
+  #
+  # The CUSTOM CONFIGs aka *yaml.conf can be generated locally by running configOLDPuppet_r10K in offline mode too.
+  #
+  #------------------------------------------------------------------------------------------------------------------------------
+__EMD
+    #cat ${tmpDir}/*yaml.conf |  grep -E -v '^}'  |  grep -E -v '^{'   >> $tmppeconf
+    cat ${tmpDir}/*yaml.conf    >> $tmppeconf
+    echo  '}'  >> $tmppeconf
+
+		 mv -f $tmppeconf $peconf.NEW   ;
+
+	echoMsg :: Final Version of  $peconf.NEW
+	catMe $peconf.NEW ;
+	cat $peconf.NEW ;
+
+	  sudo ls -l ${tmpDir}/*yaml.conf > /dev/null || \
+			    issues[${#issues[@]}]=" @Missing yaml.conf files: $(ls -l  ${tmpDir}/*yaml.conf)"
+
+      test  0`df  /opt/puppetlabs/ --output=avail | tail -1` -ge $((  1024 * 1024 * 50 )) || \
+			    issues[${#issues[@]}]=" @/opt/puppetlabs/ too small : $( df  /opt/puppetlabs/ -h --output=avail | tail -1) < 50GB "
+
+      test  0`df  /var/log/puppetlabs/ --output=avail | tail -1` -ge $((  1024 * 1024 * 24 )) || \
+			    issues[${#issues[@]}]=" @/var/log/puppetlabs/ too small : $( df /var/log/puppetlabs/ -h --output=avail | tail -1) < 24GB "
+
+	  test  0`cat /proc/meminfo | grep MemTotal | sed -E 's/[^0-9]//g'` -ge $((  1024 * 1024 * 6 )) || \
+			    issues[${#issues[@]}]=" @RAM too small : $( cat /proc/meminfo | grep MemTotal | sed -E 's/^[^0-9]+:[ ]*//g' ) < 6GB "
+
+	  test  0`cat /proc/cpuinfo  | grep processor  | wc -l`  -ge 6 || \
+			    issues[${#issues[@]}]=" @Number of CPUs too little : $( cat /proc/cpuinfo  | grep processor  | wc -l ) < 6 "
+
+	  test 0`find  /etc/puppetlabs/ -iname *.pem | grep signed | wc -l` -gt 0 || \
+			    issues[${#issues[@]}]=" @Hopefully This is a brand new Puppet Main Server Installation: There is no existing Signed Cert of existing Agent. "
+
+	  test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -le 0 || \
+			    issues[${#issues[@]}]=" @ATTENTION: ${tmpDir} is of noexec, so no executable script can be run directly from ${tmpDir}. "
+
+
+	echoMsg :: Customisations
+#	echoMeNRun grep '#configured Sooyean' $peconf.NEW
+	#grep '#configured Sooyean' $peconf.NEW
+	echoMsg '==' "Running.... grep -E -v '^( *)?#|^\$'   $peconf.NEW"
+	              grep -E -v '^( *)?#|^$'   $peconf.NEW
+
+
+  	echo ${issues[@]} | sed -E 's/@/\n\t/g'
+  	echo
+  	echo
+
+  if [[  $stageflags  =~ =PREP=   ]] ; then
+
+	  cd ${tmpDir}
+	  test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
+
+	  installer=$PWD/$(find -iname '*-installer')
+
+	  cd $(dirname "$installer" )
+ logtmp=`mktemp`
+ ( tee $logtmp | sudo su - ) << __END
+ $installer -p -y
+
+__END
+
+  fi ;
+
+
+  [[  $stageflags  =~ =INSTALL= ]] || exit 0 ;
+
+  cd ${tmpDir}
+  test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
+
+  installer=$PWD/$(find -iname '*-installer')
+
+  cd $(dirname "$installer" )
+#  [[  $stageflags  =~ =INSTALLDONE= ]] || exit 0 ;
+
+
+ logtmp=`mktemp`
+ ( tee $logtmp | sudo su - ) << __END
+ $installer -c $peconf.NEW
+
+ sleep 10
+ sleep 10;
+  cat   $gitKey
+__END
+
+  [ -s "$logtmp" ] && cat $logtmp  | xargs -I{} $0 echoMsg - == "{}"
+
+[    "$gitKey" = '-'   ] ||
+  ( tee $logtmp | cat > ${tmpDir}/installKey.sh ) << __END
+    eval '   chmod a+r ${srcgitKey} ' ;
+    eval '   mkdir -p  `dirname $gitKey` ' ;
+    eval '   cp ${srcgitKey}  $gitKey ' ;
+    eval '   chmod 0700   $gitKey ' ;
+    eval '   chown pe-puppet:pe-puppet  $gitKey ' ;
+    eval '   chown -R pe-puppet:pe-puppet  `dirname $gitKey`' ;
+    eval 'ls -l  $gitKey' ;
+__END
+
+
+  [ -s "$logtmp" ] && cat $logtmp  | xargs  $0 catMe -
+
+
+#[    "$gitKey" = '-'   ] ||
+#  cat > ${tmpDir}/installKey.sh << __END
+#    eval "   cp ${srcgitKey}  $gitKey "
+#    eval "   chown pe-puppet:pe-puppet  $gitKey "
+#    eval "   chown -R pe-puppet:pe-puppet  `dirname $gitKey`"
+#    eval "ls -l  $gitKey"
+#__END
+
+  [    "$gitKey" = '-'   ] || chmod a+x ${tmpDir}/installKey.sh
+  [    "$gitKey" = '-'   ] || sudo ${tmpDir}/installKey.sh || sudo bash ${tmpDir}/installKey.sh
+
+  [    "$gitKey" = '-'   ] || ls -l  $gitKey
+  echoMeNRun sudo df -h ;
 }
 function puppet_PuppetEntreprise_download(){
 	# tmpDir=""
