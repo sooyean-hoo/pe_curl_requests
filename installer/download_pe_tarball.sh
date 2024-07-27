@@ -47,11 +47,6 @@ if [ "regen" = "$1" ] ; then
   echo "cat ./.`basename $0`.dat >  $0" ;
   exit 0 ;  
 fi;
- if  [ "loadlib" = "$1" ] ; then
-  echo Loading....$0..... ;
-  loadlibspuppet_tasks_sh="$loadlibs:$0:"
-  return; exit 0;
- fi;
 
 ###Valentepuppet0##
 
@@ -420,6 +415,11 @@ tar -tf  $(ls -1  ${tmpDir}/puppet*.gz) > /dev/null && (
   exit 0 ;
 )
 ###Valentepuppet1##
+ if  [ "loadlib" = "$1" ] ; then
+  echo Loading....$0..... ;
+  loadlibspuppet_tasks_sh="$loadlibs:$0:"
+  return; exit 0;
+ fi;
 
 Dist="";
 DistV="";
