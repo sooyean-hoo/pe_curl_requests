@@ -18,6 +18,15 @@ function regen(){
       echo "}" >> $regenfns
   done ;
 
+  cat >> $regenfns << '_EEE'
+ if  [ "loadlib" = "$1" ] ; then
+  echo Loading....$0..... ;
+  loadlibspuppet_tasks_sh="$loadlibs:$0:"
+  return; exit 0;
+ fi;
+
+_EEE
+
   cat >> $regenfns << _EEE
     tmpDir="\${tmpDir:-\$PWD}" ;
     export tmpDir="\${tmpDir}" ;
@@ -112,13 +121,13 @@ function installPkg(){
 		  yay -Syu --builddir /tmp  --noconfirm $@ ;
 	}) || \
 	((which pacman  ||  pacman --help  )  && {
-		sudo pacman -Syu  --noconfirm $@ ;
+		sudo pacman -Syu  --noconfirm $@  || pacman -Syu  --noconfirm $@  ;
 	}) || \
 	(( which apt-get || apt-get --help )  && {
-		sudo apt-get  install -y $@ ;
+		sudo apt-get  install -y $@ || apt-get  install -y $@ ;
 	}) || \
 	(( which yum  || yum --help )  && {
-		sudo yum install -y $@ ;
+		sudo yum install -y $@ || yum install -y $@ ;
 	})
 }
 function custom_puppet_configuration(){
@@ -807,6 +816,12 @@ function puppet_PuppetEntreprise_download(){
     ls -ltr ./puppet*.gz   ; \
 
 }
+ if  [ "loadlib" = "$1" ] ; then
+  echo Loading....$0..... ;
+  loadlibspuppet_tasks_sh="$loadlibs:$0:"
+  return; exit 0;
+ fi;
+
     tmpDir="${tmpDir:-$PWD}" ;
     export tmpDir="${tmpDir}" ;
     puppet_PuppetEntreprise_download ${DOWNLOAD_VERSION} $@
@@ -821,11 +836,7 @@ tar -tf  $(ls -1  ${tmpDir}/puppet*.gz) > /dev/null && (
   exit 0 ;
 )
 ###Valentepuppet1##
- if  [ "loadlib" = "$1" ] ; then
-  echo Loading....$0..... ;
-  loadlibspuppet_tasks_sh="$loadlibs:$0:"
-  return; exit 0;
- fi;
+
 
 Dist="";
 DistV="";
