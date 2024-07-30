@@ -313,6 +313,8 @@ function dlPEConsole(){
 
     dlPEConsole_SetParameters $@
 
+
+
  	mode=$1 ;
 
 	cd ${tmpDir}
@@ -321,6 +323,7 @@ function dlPEConsole(){
 
 
 	echoMsg :: "Current Directory = $PWD"
+  echoMsg :: "tmpDir directory where the tar file is = $tmpDir"
 
 
     if [   -z "$mode"   ]  ; then
