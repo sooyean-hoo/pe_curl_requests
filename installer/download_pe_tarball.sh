@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole         installPEConsole   ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        installPEConsole   ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '====' >> $regenfns
       echo "}" >> $regenfns
@@ -106,12 +106,13 @@ function echoMsg(){
 	[ -z  "$repCPostfix" ] || \
 	 postfix=`printf %${spacerCount}s |tr " " "$repCPostfix" `
 
+  msg="$@";
 	if [ ! -z "$1" ] ; then
-		prefix="$prefix "
-		postfix=" $postfix"
+		prefix="$prefix"
+		postfix="$postfix"
+    msg=" $@ "
 	fi;
-
-	echo -e "$prefix$@$postfix"
+	echo -e "$prefix$msg$postfix"
 }
 function installPkg(){
     ((which paru || paru --help ) && {
@@ -383,6 +384,32 @@ function dlPEConsole(){
 	echoMsg :: In $PWD now
   	echoMeNRun ls -ltr puppet*.gz
   	echoMeNRun ls -lhtr puppet*.gz
+}
+function installrbenv(){
+  #### rbenv installation
+        touch ~/.bash_profile
+        touch ~/.bashrc
+        
+        source ~/.bash_profile
+
+        git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+        cd ~/.rbenv && pwd && ls -l
+        cd ~/.rbenv && src/configure && make -C src
+        [ ! -z "`grep .rbenv/bin ~/.bashrc `"   ] || echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+        [ ! -z "`grep rbenv\ init ~/.bashrc `"  ] || echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+
+
+        #exec $SHELL -l
+
+        cd ~ && pwd && export HOME=`pwd`
+        [ -z "`grep rbenv\ init ~/.bashrc `"  ] || source ~/.bash_profile
+        which rbenv
+        echo $PATH
+
+        mkdir -p "$(rbenv root)"/plugins
+        git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
+
+        cd "$(rbenv root)"/plugins/ruby-build && pwd && ls -l
 }
 function installPEConsole(){
 
