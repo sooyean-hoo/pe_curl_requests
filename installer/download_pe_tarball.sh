@@ -6,9 +6,9 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        installPEConsole   ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        installPEConsole ping_NC_Test  getValueHashTags ; do 
       echo "function $fname(){" >> $regenfns
-      ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '====' >> $regenfns
+      ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
   done ;
 
@@ -60,11 +60,13 @@ fi;
 ###Valentepuppet0##
 
 function echoMeNRun(){
+  echo "==================================" Running.... $@ "==========================================="
   logFile=/tmp/echoMeNRun.txt ;
   #$@ || eval $@    2>&1   | tee $logFile ;
    eval $@          2>&1   | tee $logFile ;
   (sleep 5 && rm -f $logFile )  &
   echo " " ;
+  echo  ===================================================================================
 }
 function catMe(){
   if [ "$1"  = "-" ] ; then
@@ -198,16 +200,19 @@ function custom_puppet_configuration(){
       value=${BASH_REMATCH[3]}
       case $section in
         custom_attributes)
+          echo ==========$1= Store the entry in attr_array for later addition to csr_attributes.yaml
           echo \
           attr_array=\("${attr_array[@]}" "${setting}: '${value}'"\)
           attr_array=("${attr_array[@]}" "${setting}: '${value}'")
           ;;
         extension_requests)
+          echo ==========$1= Store the entry in extn_array for later addition to csr_attributes.yaml
 		  echo \
           extn_array=\("${extn_array[@]}" "${setting}: '${value}'"\)
           extn_array=("${extn_array[@]}" "${setting}: '${value}'")
           ;;
         *)
+          echo ==========$1= Set the specified entry in puppet.conf
           echo \
           "${PUPPET_BIN_DIR}/puppet" config set "$setting" "$value" --section "$section"
           "${PUPPET_BIN_DIR}/puppet" config set "$setting" "$value" --section "$section"
@@ -345,6 +350,7 @@ function dlPEConsole(){
 		echo $PE_VERSION >>  $tmpf
 
 
+		#echo  ========$tmpf
 
 		nextversion=$(cat $tmpf| sort -nu | grep -A1 "$PE_VERSION" |tail -1 )
 
@@ -403,13 +409,16 @@ function installrbenv(){
 
         cd ~ && pwd && export HOME=`pwd`
         [ -z "`grep rbenv\ init ~/.bashrc `"  ] || source ~/.bash_profile
+        echo  ====RBENV Installed===========
         which rbenv
         echo $PATH
+        echo ============
 
         mkdir -p "$(rbenv root)"/plugins
         git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
 
         cd "$(rbenv root)"/plugins/ruby-build && pwd && ls -l
+        echo  ====RBbuild Installed===========  
 }
 function installPEConsole(){
 
@@ -423,12 +432,15 @@ function installPEConsole(){
 
   # stageflags=${stageflags:-=SETVALUES==PRECHECK==UNTAR==PRECONFIG==PRECONFIG2==PREP=}   # Run the prepmode of the installer
 
+  echoMsg %% ====stageflags=$stageflags====
+  echoMsg %% ====tmpDir=$tmpDir====
 
 
 
   			   sudo ls -l  ${tmpDir}/installPEConsole.SETVALUES.txt > /dev/null || \
 			    issues[${#issues[@]}]=" @Missing setvalue: ${tmpDir}/installPEConsole.SETVALUES.txt"
 
+  echoMsg ++ ====SETVALUES====
   [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] && source  ${tmpDir}/installPEConsole.SETVALUES.txt  && catMe  ${tmpDir}/installPEConsole.SETVALUES.txt ;
 
   srcgitKey=${srcgitKey:-${tmpDir}/occkeys}
@@ -450,10 +462,13 @@ function installPEConsole(){
   eval  $(  grep -A50  -F 'function installPEConsole()' $0 | grep -E   '^#'| sed -E 's/=/   /g' | awk -F' ' '{print "echoMsg :: "$2"=\$"$2";     " }'  | tr -d '[:cntrl:]'    )  ;
 
   if  [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] ; then
+  	echoMsg :: =====From  ${tmpDir}/installPEConsole.SETVALUES.txt =====
 	grep =  ${tmpDir}/installPEConsole.SETVALUES.txt | cut -d= -f1 | tr -d  ' '   | xargs -L 1  -I{}  bash -c "echo {}=\${} "
+	echoMsg :: ====================================================
   fi;
 
   [[  $stageflags  =~ =PRECHECK= ]] || exit 0 ;
+    echoMsg ++ ====PRECHECK====
 
 
         eval "sudo ls -l ${srcgitKey//\"/} " > /dev/null ; errorid=$? ;
@@ -465,12 +480,15 @@ function installPEConsole(){
             test 0$?$errorid -eq 0 || issues[${#issues[@]}]=" @Missing gitKey: $gitKey "
 
 
+		echoMsg %% ====tar.gz available now====
 		sudo ls -1tra ${tmpDir}/puppet-enterprise*.tar.gz
 
 		targz2use_=`ls -1tra ${tmpDir}/puppet-enterprise*.tar.gz  | tail -n 1`
 		targz2use=${targz2use:-$targz2use_}         # May be overwritten by  ${tmpDir}/installPEConsole.SETVALUES.txt
+		echoMsg %% ====targz2use=$targz2use===`ls -ltra ${tmpDir}/puppet-enterprise*.tar.gz  | tail -n 1`===
 
 
+  	echoMsg %% ====Issues====
   	echo ${issues[@]}
 
   if [ ! -e ${srcgitKey//\"/} ] ; then
@@ -490,6 +508,7 @@ function installPEConsole(){
   fi;
 
  [[  $stageflags  =~ =UNTAR= ]] || exit 0 ;
+  echoMsg ++ ====UNTAR====
 
   cd ${tmpDir}
   test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
@@ -507,6 +526,7 @@ function installPEConsole(){
 
   if [[  $stageflags  =~ =SETHOCONFVALUES= ]]  ; then
     if [ -e ${tmpDir}/installPEConsole.SETVALUES.conf ] ; then
+      echoMsg ++ ====SETHOCONFVALUES====
 #	[ -e ${tmpDir}/installPEConsole.SETVALUES.conf ] && source  ${tmpDir}/installPEConsole.SETVALUES.conf  && catMe  ${tmpDir}/installPEConsole.SETVALUES.conf ;
 
 	  cd ${tmpDir}
@@ -596,6 +616,7 @@ __END
 
 
   [[  $stageflags  =~ =PRECONFIG= ]] || exit 0 ;
+  echoMsg ++ ====PRECONFIG====
 
   cd ${tmpDir}
   test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
@@ -629,8 +650,11 @@ __END
   cat  $peconf.tmp | while read line ; do
     if [[  $line =~ \$  ]] ; then
       eval "echo \"    \"\\\"$line  \" #configured Sooyean\"   " |sed -E 's/: /": /g'  >> $peconf.NEW   ;
+#                echo ======================================================================================$line  ;
+#                echo ====@@=========="echo \"    \"\\\"$line  \" #configured Sooyean\"   " |sed -E 's/: /": /g'
 #                eval "echo \"    \"\\\"$line  \" #configured Sooyean\"   "
 #                eval "echo \"    \"\\\"$line  \" #configured Sooyean\"   " | sed -E 's/: /": /g'
+#                echo ====@@==========
     else
       echo $line   >> $peconf.NEW   ;
     fi;
@@ -677,6 +701,7 @@ __END
 
   if [[  $stageflags  =~ =USEHOCONFVALUES= ]]  ; then
     if [ -e $peconf.NEWCONF ] ; then
+	  echoMsg ++ ====USEHOCONFVALUES====
 
 		cp -f $peconf.NEWCONF  $peconf.NEW
 
@@ -688,6 +713,7 @@ __END
   fi
 
   [[  $stageflags  =~ =PRECONFIG2= ]] || exit 0 ;
+    echoMsg ++ ====PRECONFIG2====
 
     tmppeconf=$peconf.NEW.2
 
@@ -745,11 +771,13 @@ __EMD
 	              grep -E -v '^( *)?#|^$'   $peconf.NEW
 
 
+	echoMsg %% ====Issues====
   	echo ${issues[@]} | sed -E 's/@/\n\t/g'
   	echo
   	echo
 
   if [[  $stageflags  =~ =PREP=   ]] ; then
+	echoMsg ++ ====PREP_SUBSTAGE====
 
 	  cd ${tmpDir}
 	  test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
@@ -767,6 +795,7 @@ __END
 
 
   [[  $stageflags  =~ =INSTALL= ]] || exit 0 ;
+  echoMsg ++ ====INSTALL====
 
   cd ${tmpDir}
   test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
@@ -781,8 +810,12 @@ __END
  ( tee $logtmp | sudo su - ) << __END
  $installer -c $peconf.NEW
 
+ puppet agent -t && echo ================Puppet Run 1/3 Done
  sleep 10
+ puppet agent -t && echo ================Puppet Run 2/3 Done
  sleep 10;
+ puppet agent -t && echo ================Puppet Run 3/3 Done
+  echo ================
   cat   $gitKey
 __END
 
@@ -816,8 +849,155 @@ __END
 
   [    "$gitKey" = '-'   ] || ls -l  $gitKey
   echoMeNRun sudo df -h ;
+  echoMsg ++ ====ALLDONE====
 }
+function ping_NC_Test(){
+  while [ "$1" = "DEBUG" ] ; do
+  		DEBUG=Y ;
+  		shift ;
+  done;
+#### The test below means ......ping_NC_Test.AAAA.4.BBB = run on BBB to see if it can reach AAAA
 
+##ping_NC_Test.MASTER.4.USER     tcp 22:ssh 80:http 443:https 4433:nodeClassifier             8081:puppetDB_TCP 8140:puppetExecutor                                                                                                 8170:puppetCodeManager
+##ping_NC_Test.MASTER.4.AGENTS   tcp 8140:puppetExecutor 8142:puppetOrchestratorService
+##ping_NC_Test.MASTER.4.COMPILER tcp 4433:nodeClassifier 5432:PostgreSqlDB_4Compilers2Connect 8081:puppetDB_TCP                     8142:puppetOrchestratorService 8143:puppetOrchestratorService
+##ping_NC_Test.MASTER.4.GITLAB   tcp                                                                                                                                                                                                8170:puppetCodeManager
+##ping_NC_Test.MASTER.4.SELF     tcp                                                                                                                                 8080:puppetDB_STATUS_HTTP_LOCALONLY
+
+##ping_NC_Test.COMPILER.4.AGENT  tcp 8140:puppetExecutor 8142:puppetOrchestratorService
+##ping_NC_Test.COMPILER.4.MASTER tcp 8140:puppetExecutor                                      8081:puppetDB_TCP
+##ping_NC_Test.COMPILER.4.SELF   tcp                                                                                                                                 8080:puppetDB_STATUS_HTTP_LOCALONLY
+
+##ping_NC_Test.REMOTEACCESS      tcp 22:ssh 3389:rdp 5985:winrm 5986:winrms udp 3389:rdp 5985:winrm 5986:winrms
+##ping_NC_Test.PECONSOLE         tcp 22:ssh 80:http 443:https 4433:nodeClassifier 5432:PostgreSqlDB_4Compilers2Connect                                               8080:puppetDB_STATUS_HTTP_LOCALONLY 8081:puppetDB_TCP 8140:puppetServiceStatusEnpoint 8140:puppetExecutor 8142:puppetOrchestratorService  8143:puppetOrchestratorService 8170:puppetCodeManager
+##ping_NC_Test.PECOMPILER        tcp 22:ssh                                                                                                                          8080:puppetDB_STATUS_HTTP_LOCALONLY 8081:puppetDB_TCP 8140:puppetServiceStatusEnpoint 8140:puppetExecutor 8142:puppetOrchestratorService  8143:puppetOrchestratorService
+##ping_NC_Test.CD4PE             tcp 22:ssh                                                                 7000:puppetServiceEndpoint 8000:puppetBackServiceWebhook 8080:http                                                       8443:https
+##ping_NC_Test.PUPPETWINAGENT    tcp 22:ssh 80:http 443:https 3389:rdp 5985:winrm 5986:winrms 8081:puppetDB 7000:puppetCodeManager                                                     udp 3389:rdp 5985:winrm 5986:winrms
+##ping_NC_Test.PUPPETNIXAGENT    tcp 22:ssh 80:http 443:https                                                                                                                                                                                    8140:puppetExecutor                                 8143:puppetOrchestratorService 8170:puppetCodeManager
+
+##ping_NC_Test.GITLAB            tcp 22:ssh 80:http 443:https
+
+##ping_NC_Test.PUPPETFORGE       tcp        80:http 443:https
+
+##ping_NC_Test.DEFAULT           tcp 22:ssh 80:http 443:https 3389:rdp 5985:winrm 5986:winrms                                                                        8000:puppetBackService    8081:puppetDB_TCP 8080:puppetDB_STATUS_HTTP 8081:PuppetDB 8140:puppetServer 8143:puppetOrchestratorService 8140:puppetExecutor 8170:puppetCodeManager udp 3389:rdp 5985:winrm 5986:winrms
+
+    ncOpt="" ;
+    portType="TCP"
+
+    ip_=$1 ;
+    echoMsg '==' "Quick Check access from Bolt"
+    echoMeNRun ping -W10 -c3 $ip_  ||
+    (
+    	echoMsg ping -W10 -c3 $ip_
+    	ping -W10 -c3 $ip_
+    );
+    echoMsg '==' "=="
+
+    shift ;
+
+    checkedPairs=""
+
+    [ -z "$1" ] || {
+
+        #defaultPorts=`getValueHashTags "ping_NC_Test.DEFAULT" ` # "3389:rdp 5985:winrm 5986:winrms 80:http 443:https 22:ssh 8081:PuppetDB 8140:puppetServer 8143:puppetOrchestratorService 8140:puppetExecutor 8170:puppetCodeManager udp 3389:rdp 5985:winrm 5986:winrms"
+
+        #loadPorts="$1"
+        #defaultPorts="$@"
+
+        while [ "xxx$1" != "xxx"   ] ; do
+          loadPorts="$1"
+          defaultPorts="$1"
+
+          [ "-" = "$loadPorts" ] && loadPorts="ping_NC_Test.DEFAULT" ;
+          loadPorts=`getValueHashTags "$loadPorts" `
+          [ -z "$loadPorts" ] ||  defaultPorts="$loadPorts"
+          [  "x$1" = "xtcp" -o  "x$1" = "xudp"    ] && defaultPorts="$@"
+
+          for port in   $defaultPorts ;  do
+              #echo =====nc  -zv -w30 $ncOpt $ip_ $port===$port ;
+              name="" ;
+              if [[    $port =~ :  ]]  ;  then
+              	#echo $port | IFS=:  read port name ;
+              	name=`echo $port | cut -d: -f2 ` ;
+              	port=`echo $port | cut -d: -f1 `
+              fi;
+              #echo =============$port==$name=====
+              [ -z "$name" ] || name=" for ================ $name" ;
+
+              curtag="@$port$ip_:$port@"
+
+              if [[  $checkedPairs =~ $curtag    ]] ; then
+                echoMsg '++' "================================================SKIPPED"   > /dev/null   # For Debugging
+              else
+                checkedPairs="@$checkedPairs$curtag"
+
+                if  [ "$port" = "udp" ] ; then
+                    ncOpt="-u" ;
+                    portType="UDP" ;
+                elif  [ "$port" = "tcp" ] ; then
+                    ncOpt="" ;
+                    portType="TCP" ;
+                else
+                  #echo nc  -zv -w30 $ncOpt $ip_ $port  ;
+                  outputf=`mktemp`
+# Too Complex to Debug.... Simplifying now                  
+#                   (\
+#      	             ( \
+# 	                  	( \
+# 	                  	  #((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using nc1"   ) && which nc > /dev/null   &&  (echo HELO | nc  -zv -w10 $ncOpt $ip_ $port                                   2>&1 | tee ${outputf} > /dev/null )) && test   -z "`grep -i -E 'failed|timed out| \([0-9]+\)' ${outputf}`" ) || \
+# 	                  	  \
+# 	                  	  ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl0" ) && which curl > /dev/null &&  (echo HELO | curl  --max-time 10 --connect-timeout 10  -k https://$ip_:$port  2>&1 | tee ${outputf} > /dev/null )) && test   -z "`grep -i -E 'failed|Connected to ' ${outputf}`"  )         || \
+# 	                  	  ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl1" ) && which curl > /dev/null &&  (echo HELO | curl  --max-time 10 --connect-timeout 10     http://$ip_:$port   2>&1 | tee ${outputf} > /dev/null )) && test   -z "`grep -i -E 'failed|Connected to ' ${outputf}`"  )         || \
+# 	                      ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl2" ) && which curl > /dev/null &&  (echo HELO | curl  --max-time 10 --connect-timeout 10     telnet://$ip_:$port 2>&1 | tee ${outputf} > /dev/null )) && test   -z "`grep -i -E 'failed|Connected to ' ${outputf}`"  )         || \
+# 	                      ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using nc2"   ) && which nc   > /dev/null &&  (echo HELO | nc -v -w30                                    $ncOpt $ip_ $port  2>&1 | tee ${outputf} > /dev/null )) && test ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`" )          \
+# 	                    ) || \
+# 	                    (   \
+#                       	  ( test -z "$DEBUG" || echo -e "\n\n\n+++++Check Curl and NC installation"   ) && \
+#                       	  ( echo "curl:$( which curl > /dev/null && echo 'OK' || echo 'NOT installed' )  nc:$( which nc > /dev/null && echo 'OK' || echo 'NOT installed' )" | tee ${outputf} > /dev/null && ( test -z "`grep -i OK ${outputf}`" ) && cat  ${outputf} >&2 && ls -l /aaaaaa/confirmERROR ) \
+# 	                    ) \
+#                   	) && \
+# 	                  echo  "OPEN   $portType : $ip_ $port : OPEN   $portType $name : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )"  \
+# 	              ) || \
+#                   echo  "CLOSED $portType : $ip_ $port : CLOSED $portType       : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )"
+                  
+                  
+              	    (( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl0" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10  -k https://$ip_:$port  2>&1 | tee ${outputf} > /dev/null )) 
+              	  
+              	  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"           || \
+              	  	((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl1" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10     http://$ip_:$port   2>&1 | tee ${outputf} > /dev/null ))  
+              	  
+              	  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  )         || \
+                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl2" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10     telnet://$ip_:$port 2>&1 | tee ${outputf} > /dev/null ))  
+                  
+                  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  )         || \
+                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using nc2"   ) && which nc   > /dev/null &&  (echo HELO | nc -v -w30                                    $ncOpt $ip_ $port  2>&1 | tee ${outputf} > /dev/null ))  
+                  
+                  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`" )       ||   \
+                  	(   \
+                  	  ( test -z "$DEBUG" || echo -e "\n\n\n+++++Check Curl and NC installation"   ) && \
+                  	  ( echo "curl:$( which curl > /dev/null && echo 'OK' || echo 'NOT installed' )  nc:$( which nc > /dev/null && echo 'OK' || echo 'NOT installed' )" | tee ${outputf} > /dev/null && ( test -z "`grep -i OK ${outputf}`" ) && cat  ${outputf} >&2 && ls -l /aaaaaa/confirmERROR ) \
+                    )
+
+                  if  [ ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  ] ; then 
+	                  echo  "OPEN   $portType : $ip_ $port : OPEN   $portType $name : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )" ;
+	              else
+    	              echo  "CLOSED $portType : $ip_ $port : CLOSED $portType       : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )" ;
+                  fi;
+                 
+                  test -z "$DEBUG" || catMe $outputf
+                  rm -fr $outputf
+                fi;
+              fi;
+
+          done;
+          shift;
+        done;
+    }
+}
+function getValueHashTags(){
+    key="$@" ;
+    grep -E "^##$key " $0 | sed -E "s/^##$key //";
+}
 function puppet_PuppetEntreprise_download(){
 	# tmpDir=""
 	tmpDir=${tmpDir:-/tmp} ;
@@ -867,149 +1047,6 @@ tar -tf  $(ls -1  ${tmpDir}/puppet*.gz) > /dev/null && (
   exit 0 ;
 )
 ###Valentepuppet1##
-function ping_NC_Test(){ #  <DEBUG> <targetdns|targetip> <oneoftheprofilebelow|tcp|udp> (<oneoftheprofileabove2|tcp|udp>) ......
-  while [ "$1" = "DEBUG" ] ; do
-      DEBUG=Y ;
-      shift ;
-  done;
-#### The test below means ......ping_NC_Test.AAAA.4.BBB = run on BBB to see if it can reach AAAA
-
-##ping_NC_Test.MASTER.4.USER     tcp 22:ssh 80:http 443:https 4433:nodeClassifier             8081:puppetDB_TCP 8140:puppetExecutor                                                                                                 8170:puppetCodeManager
-##ping_NC_Test.MASTER.4.AGENTS   tcp 8140:puppetExecutor 8142:puppetOrchestratorService
-##ping_NC_Test.MASTER.4.COMPILER tcp 4433:nodeClassifier 5432:PostgreSqlDB_4Compilers2Connect 8081:puppetDB_TCP                     8142:puppetOrchestratorService 8143:puppetOrchestratorService
-##ping_NC_Test.MASTER.4.GITLAB   tcp                                                                                                                                                                                                8170:puppetCodeManager
-##ping_NC_Test.MASTER.4.SELF     tcp                                                                                                                                 8080:puppetDB_STATUS_HTTP_LOCALONLY
-
-##ping_NC_Test.COMPILER.4.AGENT  tcp 8140:puppetExecutor 8142:puppetOrchestratorService
-##ping_NC_Test.COMPILER.4.MASTER tcp 8140:puppetExecutor                                      8081:puppetDB_TCP
-##ping_NC_Test.COMPILER.4.SELF   tcp                                                                                                                                 8080:puppetDB_STATUS_HTTP_LOCALONLY
-
-##ping_NC_Test.REMOTEACCESS      tcp 22:ssh 3389:rdp 5985:winrm 5986:winrms udp 3389:rdp 5985:winrm 5986:winrms
-##ping_NC_Test.PECONSOLE         tcp 22:ssh 80:http 443:https 4433:nodeClassifier 5432:PostgreSqlDB_4Compilers2Connect                                               8080:puppetDB_STATUS_HTTP_LOCALONLY 8081:puppetDB_TCP 8140:puppetServiceStatusEnpoint 8140:puppetExecutor 8142:puppetOrchestratorService  8143:puppetOrchestratorService 8170:puppetCodeManager
-##ping_NC_Test.PECOMPILER        tcp 22:ssh                                                                                                                          8080:puppetDB_STATUS_HTTP_LOCALONLY 8081:puppetDB_TCP 8140:puppetServiceStatusEnpoint 8140:puppetExecutor 8142:puppetOrchestratorService  8143:puppetOrchestratorService
-##ping_NC_Test.CD4PE             tcp 22:ssh                                                                 7000:puppetServiceEndpoint 8000:puppetBackServiceWebhook 8080:http                                                       8443:https
-##ping_NC_Test.PUPPETWINAGENT    tcp 22:ssh 80:http 443:https 3389:rdp 5985:winrm 5986:winrms 8081:puppetDB 7000:puppetCodeManager                                                     udp 3389:rdp 5985:winrm 5986:winrms
-##ping_NC_Test.PUPPETNIXAGENT    tcp 22:ssh 80:http 443:https                                                                                                                                                                                    8140:puppetExecutor                                 8143:puppetOrchestratorService 8170:puppetCodeManager
-
-##ping_NC_Test.GITLAB            tcp 22:ssh 80:http 443:https
-
-##ping_NC_Test.PUPPETFORGE       tcp        80:http 443:https
-
-##ping_NC_Test.DEFAULT           tcp 22:ssh 80:http 443:https 3389:rdp 5985:winrm 5986:winrms                                                                        8000:puppetBackService    8081:puppetDB_TCP 8080:puppetDB_STATUS_HTTP 8081:PuppetDB 8140:puppetServer 8143:puppetOrchestratorService 8140:puppetExecutor 8170:puppetCodeManager udp 3389:rdp 5985:winrm 5986:winrms
-
-    ncOpt="" ;
-    portType="TCP"
-
-    ip_=$1 ;
-    echoMsg '==' "Quick Check access from Bolt"
-    echoMeNRun ping -W10 -c3 $ip_  ||
-    (
-      echoMsg ping -W10 -c3 $ip_
-      ping -W10 -c3 $ip_
-    );
-    echoMsg '==' "=="
-
-    shift ;
-
-    checkedPairs=""
-
-    [ -z "$1" ] || {
-
-        #defaultPorts=`getValueHashTags "ping_NC_Test.DEFAULT" ` # "3389:rdp 5985:winrm 5986:winrms 80:http 443:https 22:ssh 8081:PuppetDB 8140:puppetServer 8143:puppetOrchestratorService 8140:puppetExecutor 8170:puppetCodeManager udp 3389:rdp 5985:winrm 5986:winrms"
-
-        #loadPorts="$1"
-        #defaultPorts="$@"
-
-        while [ "xxx$1" != "xxx"   ] ; do
-          loadPorts="$1"
-          defaultPorts="$1"
-
-          [ "-" = "$loadPorts" ] && loadPorts="ping_NC_Test.DEFAULT" ;
-          loadPorts=`getValueHashTags "$loadPorts" `
-          [ -z "$loadPorts" ] ||  defaultPorts="$loadPorts"
-          [  "x$1" = "xtcp" -o  "x$1" = "xudp"    ] && defaultPorts="$@"
-
-          for port in   $defaultPorts ;  do
-              #echo =====nc  -zv -w30 $ncOpt $ip_ $port===$port ;
-              name="" ;
-              if [[    $port =~ :  ]]  ;  then
-                #echo $port | IFS=:  read port name ;
-                name=`echo $port | cut -d: -f2 ` ;
-                port=`echo $port | cut -d: -f1 `
-              fi;
-              #echo =============$port==$name=====
-              [ -z "$name" ] || name=" for ================ $name" ;
-
-              curtag="@$port$ip_:$port@"
-
-              if [[  $checkedPairs =~ $curtag    ]] ; then
-                echoMsg '++' "================================================SKIPPED"   > /dev/null   # For Debugging
-              else
-                checkedPairs="@$checkedPairs$curtag"
-
-                if  [ "$port" = "udp" ] ; then
-                    ncOpt="-u" ;
-                    portType="UDP" ;
-                elif  [ "$port" = "tcp" ] ; then
-                    ncOpt="" ;
-                    portType="TCP" ;
-                else
-                  #echo nc  -zv -w30 $ncOpt $ip_ $port  ;
-                  outputf=`mktemp`
-# Too Complex to Debug.... Simplifying now                  
-#                   (\
-#                    ( \
-#                       ( \
-#                         #((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using nc1"   ) && which nc > /dev/null   &&  (echo HELO | nc  -zv -w10 $ncOpt $ip_ $port                                   2>&1 | tee ${outputf} > /dev/null )) && test   -z "`grep -i -E 'failed|timed out| \([0-9]+\)' ${outputf}`" ) || \
-#                         \
-#                         ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl0" ) && which curl > /dev/null &&  (echo HELO | curl  --max-time 10 --connect-timeout 10  -k https://$ip_:$port  2>&1 | tee ${outputf} > /dev/null )) && test   -z "`grep -i -E 'failed|Connected to ' ${outputf}`"  )         || \
-#                         ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl1" ) && which curl > /dev/null &&  (echo HELO | curl  --max-time 10 --connect-timeout 10     http://$ip_:$port   2>&1 | tee ${outputf} > /dev/null )) && test   -z "`grep -i -E 'failed|Connected to ' ${outputf}`"  )         || \
-#                         ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl2" ) && which curl > /dev/null &&  (echo HELO | curl  --max-time 10 --connect-timeout 10     telnet://$ip_:$port 2>&1 | tee ${outputf} > /dev/null )) && test   -z "`grep -i -E 'failed|Connected to ' ${outputf}`"  )         || \
-#                         ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using nc2"   ) && which nc   > /dev/null &&  (echo HELO | nc -v -w30                                    $ncOpt $ip_ $port  2>&1 | tee ${outputf} > /dev/null )) && test ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`" )          \
-#                       ) || \
-#                       (   \
-#                           ( test -z "$DEBUG" || echo -e "\n\n\n+++++Check Curl and NC installation"   ) && \
-#                           ( echo "curl:$( which curl > /dev/null && echo 'OK' || echo 'NOT installed' )  nc:$( which nc > /dev/null && echo 'OK' || echo 'NOT installed' )" | tee ${outputf} > /dev/null && ( test -z "`grep -i OK ${outputf}`" ) && cat  ${outputf} >&2 && ls -l /aaaaaa/confirmERROR ) \
-#                       ) \
-#                     ) && \
-#                     echo  "OPEN   $portType : $ip_ $port : OPEN   $portType $name : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )"  \
-#                 ) || \
-#                   echo  "CLOSED $portType : $ip_ $port : CLOSED $portType       : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )"
-                  
-                  
-                    (( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl0" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10  -k https://$ip_:$port  2>&1 | tee ${outputf} > /dev/null )) 
-                  
-                  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"           || \
-                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl1" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10     http://$ip_:$port   2>&1 | tee ${outputf} > /dev/null ))  
-                  
-                  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  )         || \
-                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl2" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10     telnet://$ip_:$port 2>&1 | tee ${outputf} > /dev/null ))  
-                  
-                  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  )         || \
-                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using nc2"   ) && which nc   > /dev/null &&  (echo HELO | nc -v -w30                                    $ncOpt $ip_ $port  2>&1 | tee ${outputf} > /dev/null ))  
-                  
-                  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`" )       ||   \
-                    (   \
-                      ( test -z "$DEBUG" || echo -e "\n\n\n+++++Check Curl and NC installation"   ) && \
-                      ( echo "curl:$( which curl > /dev/null && echo 'OK' || echo 'NOT installed' )  nc:$( which nc > /dev/null && echo 'OK' || echo 'NOT installed' )" | tee ${outputf} > /dev/null && ( test -z "`grep -i OK ${outputf}`" ) && cat  ${outputf} >&2 && ls -l /aaaaaa/confirmERROR ) \
-                    )
-
-                  if  [ ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  ] ; then 
-                    echo  "OPEN   $portType : $ip_ $port : OPEN   $portType $name : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )" ;
-                else
-                    echo  "CLOSED $portType : $ip_ $port : CLOSED $portType       : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )" ;
-                  fi;
-                 
-                  test -z "$DEBUG" || catMe $outputf
-                  rm -fr $outputf
-                fi;
-              fi;
-
-          done;
-          shift;
-        done;
-    }
-}
 
 Dist="";
 DistV="";
