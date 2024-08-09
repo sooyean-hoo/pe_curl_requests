@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        installPEConsole ping_NC_Test  getValueHashTags ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        installPEConsole ping_NC_Test  getValueHashTags runChain ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -24,7 +24,12 @@ function regen(){
   loadlibspuppet_tasks_sh="$loadlibs:$0:"
   return; exit 0;
  fi;
-
+ if  [ "exec" = "$1" ] ; then
+  shift ;
+  echo Execing....$@..... ;
+  $@ ; errorid=$?;
+  return; exit $errorid;
+ fi;
 _EEE
 
   cat >> $regenfns << _EEE
@@ -998,6 +1003,40 @@ function getValueHashTags(){
     key="$@" ;
     grep -E "^##$key " $0 | sed -E "s/^##$key //";
 }
+function runChain(){
+	d=' '
+	cmd2run=$1;
+	if [ ${#cmd2run} -eq 1  ] ; then
+		d=$cmd2run ;
+		shift ;
+		cmd2run='';
+	fi;
+
+	#echo d=$d    1=$1
+
+	paras="$@";
+	while [ ! -z "$paras"  ]  ; do
+
+		if [ "$1" = "$d"  ] ; then
+			echoMsg '==' Running.... $cmd2run ;
+			$cmd2run
+			echoMsg %% $cmd2run ;
+			cmd2run="";
+			shift;
+		else
+			cmd2run="$cmd2run $1";
+			shift;
+		fi;
+		paras="$@";
+
+
+	done;
+	if [ ! -z "$cmd2run"  ] ; then
+			echoMsg '==' $cmd2run ;
+			$cmd2run
+			echoMsg %% $cmd2run ;
+	fi;
+}
 function puppet_PuppetEntreprise_download(){
 	# tmpDir=""
 	tmpDir=${tmpDir:-/tmp} ;
@@ -1032,7 +1071,12 @@ function puppet_PuppetEntreprise_download(){
   loadlibspuppet_tasks_sh="$loadlibs:$0:"
   return; exit 0;
  fi;
-
+ if  [ "exec" = "$1" ] ; then
+  shift ;
+  echo Execing....$@..... ;
+  $@ ;
+  return; exit 0;
+ fi;
     tmpDir="${tmpDir:-$PWD}" ;
     export tmpDir="${tmpDir}" ;
     puppet_PuppetEntreprise_download ${DOWNLOAD_VERSION} $@
