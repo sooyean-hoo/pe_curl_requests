@@ -1368,5 +1368,43 @@ __END
 			
 			
 			#curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/2019.2.2/ | grep href | grep puppet | sed -E 's/^.+(puppet.+tar).+$/\1/g'
+			
+			
+      osp=( 
+       ["rhel"]='https://yum.puppet.com/<PLATFORM_NAME>-release-<OS_ABBREVIATION>-<OS_VERSION>.noarch.rpm'  
+       ["ubuntu"]'https://apt.puppet.com/<PLATFORM_VERSION>-release-<VERSION_CODE_NAME>.deb'
+      )
+      
+      opsversion=( ${DOWNLOAD_VERSION//./ })
+      opsversion1="puppet${opsversion[1]}"
+
+
+      if [ "$DOWNLOAD_DIST" = "ubuntu" ] ; then
+        echo "For Ubuntu" ;
+        pkgurltemplate=$( grep -A4  osp= $0 | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
+        
+        pkgurl=${pkgurltemplate/\<VERSION_CODE_NAME\>/$VERSION_CODENAME}
+        pkgurl=${pkgurl/\<PLATFORM_VERSION\>/$opsversion1}
+        
+        echo "====OPENSOURCEPUPPET=pkgurl=$pkgurl="
+      elif [ "$DOWNLOAD_DIST" = "rhel" ] ; then
+        echo "For RedHat" ;
+        pkgurltemplate=$( grep -A4  osp= $0 | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
+        
+        OS_ABB=$(echo $DOWNLOAD_DIST | sed -E 's/^.+([a-z]{2})/\1/g' )
+        
+        OSMajorversion=${opsversion[1]}
+        
+        pkgurl=${pkgurltemplate/\<OS_ABBREVIATION\>/$OS_ABB}
+        pkgurl=${pkgurl/\<PLATFORM_NAME\>/$opsversion1}
+        pkgurl=${pkgurl/\<OS_VERSION\>/$OSMajorversion}
+        echo "====OPENSOURCEPUPPET=pkgurl=$pkgurl=";
+      else
+        echo "ERROR: Not Supported" ;
+      fi ;
+			 
+			
+			
+			
 done ;
  rm -f $dlScript
