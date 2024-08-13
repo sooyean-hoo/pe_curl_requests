@@ -1376,7 +1376,13 @@ __END
       )
       
       opsversion=( ${DOWNLOAD_VERSION//./ })
-      opsversion1="puppet${opsversion[1]}"
+      
+      if [ "$opensourcepuppetversion" = "L" ] ; then
+        opensourcepuppetversion="" ;
+      fi;
+      opensourcepuppetversion_def=${opsversion[1]} ;
+      opensourcepuppetversion=${opensourcepuppetversion:-$opensourcepuppetversion_def} ;
+      opsversion1="puppet${opensourcepuppetversion}" ;
 
 
       if [ "$DOWNLOAD_DIST" = "ubuntu" ] ; then
@@ -1386,7 +1392,7 @@ __END
         pkgurl=${pkgurltemplate/\<VERSION_CODE_NAME\>/$VERSION_CODENAME}
         pkgurl=${pkgurl/\<PLATFORM_VERSION\>/$opsversion1}
         
-        echo "====OPENSOURCEPUPPET=pkgurl=$pkgurl="
+        echo "====OPENSOURCEPUPPET=pkgurl=$pkgurl"
       elif [ "$DOWNLOAD_DIST" = "rhel" ] ; then
         echo "For RedHat" ;
         pkgurltemplate=$( grep -A4  osp= $0 | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
@@ -1398,7 +1404,7 @@ __END
         pkgurl=${pkgurltemplate/\<OS_ABBREVIATION\>/$OS_ABB}
         pkgurl=${pkgurl/\<PLATFORM_NAME\>/$opsversion1}
         pkgurl=${pkgurl/\<OS_VERSION\>/$OSMajorversion}
-        echo "====OPENSOURCEPUPPET=pkgurl=$pkgurl=";
+        echo "====OPENSOURCEPUPPET=pkgurl=$pkgurl";
       else
         echo "ERROR: Not Supported" ;
       fi ;
