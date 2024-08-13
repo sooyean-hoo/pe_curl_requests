@@ -1377,12 +1377,12 @@ __END
       
       opsversion=( ${DOWNLOAD_VERSION//./ })
       
-      if [ "$ospversion" = "L" ] ; then
-        ospversion="" ;
+      if [ "$opensourcepuppetversion" = "L" ] ; then
+        opensourcepuppetversion="" ;
       fi;
-      ospversion_def=${opsversion[1]} ;
-      ospversion=${ospversion:-$ospversion_def} ;
-      opsversion1="puppet${ospversion}" ;
+      opensourcepuppetversion_def=${opsversion[1]} ;
+      opensourcepuppetversion=${opensourcepuppetversion:-$opensourcepuppetversion_def} ;
+      opsversion1="puppet${opensourcepuppetversion}" ;
 
 
       if [ "$DOWNLOAD_DIST" = "ubuntu" ] ; then
