@@ -131,12 +131,12 @@ function installPkg(){
 	((which pacman  ||  pacman --help  )  && {
 		sudo pacman -Syu  --noconfirm $@  || pacman -Syu  --noconfirm $@  ;
 	}) || \
-	(( which apt-get || apt-get --help )  && {
-		sudo apt-get  install -y $@ || apt-get  install -y $@ ;
-	}) || \
   (( which apt  || apt --help )  && {
     sudo apt install -y $@ || apt install -y $@ ;
   }) || \
+	(( which apt-get || apt-get --help )  && {
+		sudo apt-get  install -y $@ || apt-get  install -y $@ ;
+	}) || \
 	(( which yum  || yum --help )  && {
 		sudo yum install -y $@ || yum install -y $@ ;
 	})
@@ -1054,7 +1054,7 @@ function puppet_PuppetEntreprise_download(){
 	fi;
 
 	echoMsg '==' "Running.... cd $tmpDir &&  pwd && \
-	echo DISABLED: curl  \"https://raw.githubusercontent.com/sooyean-hoo/pe_curl_requests/feature/SYInstallerEnhance/installer/download_pe_tarball.sh\"   | bash - " ;
+	echo echo DISABLED: curl  \"https://raw.githubusercontent.com/sooyean-hoo/pe_curl_requests/feature/SYInstallerEnhance/installer/download_pe_tarball.sh\"   | bash - " ;
 	cd $tmpDir &&  pwd && \
 	echo echo DISABLED: curl  "https://raw.githubusercontent.com/sooyean-hoo/pe_curl_requests/feature/SYInstallerEnhance/installer/download_pe_tarball.sh"   | bash - ;
 
@@ -1077,8 +1077,8 @@ function puppet_PuppetEntreprise_download(){
  if  [ "exec" = "$1" ] ; then
   shift ;
   echo Execing....$@..... ;
-  $@ ;
-  return; exit 0;
+  $@ ; errorid=$?;
+  return; exit $errorid;
  fi;
     tmpDir="${tmpDir:-$PWD}" ;
     export tmpDir="${tmpDir}" ;
