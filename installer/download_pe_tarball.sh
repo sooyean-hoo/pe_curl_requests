@@ -1349,6 +1349,7 @@ __END
 			echo "Downloading PE $DOWNLOAD_VERSION for ${DOWNLOAD_DIST}-${DOWNLOAD_RELEASE}-${DOWNLOAD_ARCH} to: ${tarball_name}"
 			echo
 			
+			[ -z "$opensourcepuppetversion" ] && \
 			curl --progress-bar \
 			  -L \
 			  -o "./${tarball_name}" \
@@ -1370,10 +1371,10 @@ __END
 			#curl  https://artifactory.delivery.puppetlabs.net/artifactory/generic_enterprise__local/archives/releases/2019.2.2/ | grep href | grep puppet | sed -E 's/^.+(puppet.+tar).+$/\1/g'
 			
 			
-      osp=( 
+      osp="( 
        ["rhel"]='https://yum.puppet.com/<PLATFORM_NAME>-release-<OS_ABBREVIATION>-<OS_VERSION>.noarch.rpm'  
        ["ubuntu"]'https://apt.puppet.com/<PLATFORM_VERSION>-release-<VERSION_CODE_NAME>.deb'
-      )
+      )"
       
       opsversion=( ${DOWNLOAD_VERSION//./ })
       
@@ -1384,6 +1385,9 @@ __END
       opensourcepuppetversion=${opensourcepuppetversion:-$opensourcepuppetversion_def} ;
       opsversion1="puppet${opensourcepuppetversion}" ;
 
+      echo '==============OSP==================='
+      set | grep -E '^DOWNLOAD'
+      echo '===================================='
 
       if [ "$DOWNLOAD_DIST" = "ubuntu" ] ; then
         echo "For Ubuntu" ;
@@ -1395,7 +1399,13 @@ __END
         echo "====OPENSOURCEPUPPET=pkgurl=$pkgurl"
       elif [ "$DOWNLOAD_DIST" = "rhel" ] ; then
         echo "For RedHat" ;
+        
+        echo "===thisfile=$thisfile" ;
         pkgurltemplate=$( grep -A4  osp= $0 | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
+
+        if [ -z "$pkgurltemplate" ] ; then
+          pkgurltemplate=$( echo $osp | sed -E 's/ /\n/g' | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
+        fi;
         
         OS_ABB=$(echo $DOWNLOAD_DIST | sed -E 's/^.+([a-z]{2})/\1/g' )
         
