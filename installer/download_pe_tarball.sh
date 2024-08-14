@@ -14,7 +14,7 @@ function regen(){
 
   for fname in   puppet_PuppetEntreprise_download    ;   do 
       echo "function $fname(){" >> $regenfns
-      ${valentepuppetcmd} showFNCMDs - $fname | sed -E 's/curl /echo DISABLED: curl/g' | sed -E 's/tar -xzvf/tar -tf/g' |  grep -E -v  '====' >> $regenfns
+      ${valentepuppetcmd} showFNCMDs - $fname | sed -E 's/curl /echo echo DISABLED: curl/g' | sed -E 's/tar -xzvf/tar -tf/g' |  grep -E -v  '====' >> $regenfns
       echo "}" >> $regenfns
   done ;
 
@@ -134,6 +134,9 @@ function installPkg(){
 	(( which apt-get || apt-get --help )  && {
 		sudo apt-get  install -y $@ || apt-get  install -y $@ ;
 	}) || \
+  (( which apt  || apt --help )  && {
+    sudo apt install -y $@ || apt install -y $@ ;
+  }) || \
 	(( which yum  || yum --help )  && {
 		sudo yum install -y $@ || yum install -y $@ ;
 	})
@@ -1053,7 +1056,7 @@ function puppet_PuppetEntreprise_download(){
 	echoMsg '==' "Running.... cd $tmpDir &&  pwd && \
 	echo DISABLED: curl  \"https://raw.githubusercontent.com/sooyean-hoo/pe_curl_requests/feature/SYInstallerEnhance/installer/download_pe_tarball.sh\"   | bash - " ;
 	cd $tmpDir &&  pwd && \
-	echo DISABLED: curl  "https://raw.githubusercontent.com/sooyean-hoo/pe_curl_requests/feature/SYInstallerEnhance/installer/download_pe_tarball.sh"   | bash - ;
+	echo echo DISABLED: curl  "https://raw.githubusercontent.com/sooyean-hoo/pe_curl_requests/feature/SYInstallerEnhance/installer/download_pe_tarball.sh"   | bash - ;
 
 	ls -ltr ./puppet*.gz
 	[ -s ./puppet*.gz ] ||  cd $tmpDir &&  pwd && dlPEConsole $DOWNLOAD_VERSION_REQ
@@ -1392,7 +1395,10 @@ __END
       if [ "$DOWNLOAD_DIST" = "ubuntu" ] ; then
         echo "For Ubuntu" ;
         pkgurltemplate=$( grep -A4  osp= $0 | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
-        
+        if [ -z "$pkgurltemplate" ] ; then
+          pkgurltemplate=$( echo $osp | sed -E 's/ /\n/g' | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
+        fi;
+           
         pkgurl=${pkgurltemplate/\<VERSION_CODE_NAME\>/$VERSION_CODENAME}
         pkgurl=${pkgurl/\<PLATFORM_VERSION\>/$opsversion1}
         
@@ -1402,7 +1408,6 @@ __END
         
         echo "===thisfile=$thisfile" ;
         pkgurltemplate=$( grep -A4  osp= $0 | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
-
         if [ -z "$pkgurltemplate" ] ; then
           pkgurltemplate=$( echo $osp | sed -E 's/ /\n/g' | grep $DOWNLOAD_DIST | cut -d\'  -f2 ) ;
         fi;
