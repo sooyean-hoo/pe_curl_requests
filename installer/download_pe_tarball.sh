@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        installPEConsole ping_NC_Test  getValueHashTags runChain ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -122,24 +122,27 @@ function echoMsg(){
 	echo -e "$prefix$msg$postfix"
 }
 function installPkg(){
-    ((which paru || paru --help ) && {
+    ((which paru || paru --help ) 2> /dev/null && {
 		  paru -Syu --noconfirm ;
 	}) || \
-    ((which yay || yay --help ) && {
+    ((which yay || yay --help ) 2> /dev/null && {
 		  yay -Syu --builddir /tmp  --noconfirm $@ ;
 	}) || \
-	((which pacman  ||  pacman --help  )  && {
+	((which pacman  ||  pacman --help  ) 2> /dev/null  && {
 		sudo pacman -Syu  --noconfirm $@  || pacman -Syu  --noconfirm $@  ;
 	}) || \
-  (( which apt  || apt --help )  && {
+  (( which apt  || apt --help ) 2> /dev/null  && {
     sudo apt install -y $@ || apt install -y $@ ;
   }) || \
-	(( which apt-get || apt-get --help )  && {
+	(( which apt-get || apt-get --help ) 2> /dev/null  && {
 		sudo apt-get  install -y $@ || apt-get  install -y $@ ;
 	}) || \
-	(( which yum  || yum --help )  && {
+	(( which yum  || yum --help ) 2> /dev/null  && {
 		sudo yum install -y $@ || yum install -y $@ ;
-	})
+	}) || \
+  (( which zypper  || zypper --help ) 2> /dev/null  && {
+    sudo zypper install -y -l $@ || zypper install -y -l $@ ;
+  }) 
 }
 function custom_puppet_configuration(){
 
@@ -427,6 +430,16 @@ function installrbenv(){
 
         cd "$(rbenv root)"/plugins/ruby-build && pwd && ls -l
         echo  ====RBbuild Installed===========  
+}
+function cleanse_dlPEConsole(){
+
+	echoMsg '=='  "cd /tmp"
+	echoMsg '=='  'rm -fr  puppet-enterprise*'
+	echoMsg '=='  'ls -l   puppet-enterprise*'
+
+  cd /tmp
+	rm -fr  puppet-enterprise*
+	ls -l   puppet-enterprise*
 }
 function installPEConsole(){
 
