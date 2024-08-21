@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -143,6 +143,63 @@ function installPkg(){
   (( which zypper  || zypper --help ) 2> /dev/null  && {
     sudo zypper install -y -l $@ || zypper install -y -l $@ ;
   }) 
+}
+function addrepoPkg(){
+#   ((which paru || paru --help ) && {
+#       paru -Syu --noconfirm ;
+#   }) || \
+#   ((which yay || yay --help ) && {
+#       yay -Syu --noconfirm ;
+#   }) || \
+#   ((which pacman || pacman --help ) && {
+#     sudo pacman -Syu --noconfirm || pacman -Syu --noconfirm  ;
+#   }) || \
+#   (( which apt-get || apt-get --help )  &&  { \
+#     sudo apt update -y || apt update -y  ; \
+#   }) || \
+  (( which yum  || yum --help )  && {
+    sudo yum-config-manager --add-repo $@ || sudo curl --add-repo $@    -o  /etc/yum.repos.d/`basename $@`  ;
+  }) || \
+  (( which zypper  || yum --help )  && {
+    sudo zypper addrepo $@ || zypper addrepo $@ ;
+  })
+}
+function upgradePkg(){
+  ((which paru || paru --help ) && {
+		  paru -Syu --noconfirm ;
+	}) || \
+	((which yay || yay --help ) && {
+		  yay -Syu --noconfirm ;
+	}) || \
+	((which pacman || pacman --help ) && {
+		sudo pacman -Syu --noconfirm || pacman -Syu --noconfirm  ;
+	}) || \
+	(( which apt-get || apt-get --help )  &&  { \
+		sudo apt update -y || apt update -y  ; \
+  }) || \
+  (( which yum  || yum --help )  && {
+    sudo yum update -y $@ || yum update -y $@ ;
+  }) || \
+  (( which zypper  || yum --help )  && {
+    sudo zypper update -y -l $@ || zypper update -y -l $@ ;
+  })
+}
+function chkPkg(){
+    ((which paru || paru --help ) && {
+		  paru -Syu --noconfirm ;
+	}) || \
+    ((which yay || yay --help ) && {
+		  yay -Q $@ ;
+	}) || \
+	((which pacman || pacman --help ) && {
+		sudo pacman -Q $@ ||  pacman -Q $@  ;
+	}) || \
+	((which apt-cache || apt-cache --help )  && {
+		sudo apt-cache search  $@ | grep install ||  apt-cache search  $@ | grep install ;
+	}) || \
+  (( which zypper  || yum --help )  && {
+    sudo zypper info $@ || zypper info $@ ;
+  })
 }
 function custom_puppet_configuration(){
 
