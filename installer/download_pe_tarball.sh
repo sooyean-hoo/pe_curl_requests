@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain installnvm rungithubactionuse ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -1109,6 +1109,40 @@ function runChain(){
 			$cmd2run
 			echoMsg %% $cmd2run ;
 	fi;
+}
+function installnvm(){
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash -
+  source ~/.bashrc
+  nvm install node ;
+}
+function rungithubactionuse(){
+  if [ "$1" = "-" ] ; then
+    shift ;
+  fi;
+  actioname=$1 ;
+  
+  export RUNNER_TEMP=${RUNNER_TEMP:-/tmp}
+  
+  giturl=${actioname/@*/}
+  giturlbase=${giturl/*\//}
+  gitbranch=${actioname/*@/}
+  
+  set | grep -E '^git|RUNNER_TEMP=' ;
+  
+  cd $RUNNER_TEMP ;
+  git clone https://github.com/${giturl}.git
+  cd ${giturlbase}
+
+  which node 2> /dev/null > /dev/null || installnvm ;
+
+  while [ ! -z $2 ] ; do
+    echo ${2/*=/} > ./.${2/=*/} ;
+    echo   ${2/*=/} = ./.${2/=*/} ;
+    shift
+  done ;
+  grep -A2 runs: ./action.yml  | cut -d: -f2 | tr '\n'  ' ' | sed -E 's/node20/node/g' | bash -
+
+  
 }
 function puppet_PuppetEntreprise_download(){
 	# tmpDir=""
