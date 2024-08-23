@@ -20,7 +20,7 @@ function regen(){
 
   cat >> $regenfns << '_EEE'
  if  [ "loadlib" = "$1" ] ; then
-  echo Loading....$0..... ;
+  echo Loading....$@..... ;
   loadlibspuppet_tasks_sh="$loadlibs:$0:"
   return; exit 0;
  fi;
