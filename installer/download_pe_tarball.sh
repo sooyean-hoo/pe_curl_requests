@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain installnvm rungithubactionuse ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -20,8 +20,9 @@ function regen(){
 
   cat >> $regenfns << '_EEE'
  if  [ "loadlib" = "$1" ] ; then
-  echo Loading....$@..... ;
+  echo Loading....$0..$@..... ;
   loadlibspuppet_tasks_sh="$loadlibs:$0:"
+  loadlibs="$loadlibs:$0:"
   return; exit 0;
  fi;
  if  [ "exec" = "$1" ] ; then
@@ -1110,6 +1111,15 @@ function runChain(){
 			echoMsg %% $cmd2run ;
 	fi;
 }
+function runlogged(){
+	logfile=$1 ;
+	shift ;
+	if [ -z "$1" ] ; then
+	  >  $logfile ;
+	else
+	  $@ >>  $logfile ;
+	fi;
+}
 function installnvm(){
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash -
   source ~/.bashrc
@@ -1174,8 +1184,9 @@ function puppet_PuppetEntreprise_download(){
 
 }
  if  [ "loadlib" = "$1" ] ; then
-  echo Loading....$0..... ;
+  echo Loading....$0..$@..... ;
   loadlibspuppet_tasks_sh="$loadlibs:$0:"
+  loadlibs="$loadlibs:$0:"
   return; exit 0;
  fi;
  if  [ "exec" = "$1" ] ; then
