@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg uninstallPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -143,6 +143,29 @@ function installPkg(){
 	}) || \
   (( which zypper  || zypper --help ) 2> /dev/null  && {
     sudo zypper install -y -l $@ || zypper install -y -l $@ ;
+  }) 
+}
+function uninstallPkg(){
+    ((which paru || paru --help ) 2> /dev/null && {
+      paru -Rn --noconfirm ;
+  }) || \
+    ((which yay || yay --help ) 2> /dev/null && {
+      yay -Rn --builddir /tmp  --noconfirm $@ ;
+  }) || \
+  ((which pacman  ||  pacman --help  ) 2> /dev/null  && {
+    sudo pacman -Rn  --noconfirm $@  || pacman -Rn  --noconfirm $@  ;
+  }) || \
+  (( which apt  || apt --help ) 2> /dev/null  && {
+    sudo apt uninstall -y $@ || apt uninstall -y $@ ;
+  }) || \
+  (( which apt-get || apt-get --help ) 2> /dev/null  && {
+    sudo apt-get  uninstall -y $@ || apt-get  uninstall -y $@ ;
+  }) || \
+  (( which yum  || yum --help ) 2> /dev/null  && {
+    sudo yum remove -y $@ || yum remove -y $@ ;
+  }) || \
+  (( which zypper  || zypper --help ) 2> /dev/null  && {
+    sudo zypper remove -y   $@ || zypper remove -y  $@ ;
   }) 
 }
 function addrepoPkg(){
