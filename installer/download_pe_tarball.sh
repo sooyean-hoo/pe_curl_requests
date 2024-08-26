@@ -380,6 +380,10 @@ function dlPEConsole_SetParameters(){
   if [[ ${DIST} =~ ubuntu ]] ; then
     ARCH=amd64 ;
   fi;
+  if [[ ${ID} =~ sles ]] ; then
+    DIST="sles" ;
+    VERSION=${VERSION/.*/}
+  fi;
 
   if [ "check" != "$mode"   ]  ; then
 	echoMsg .. Checking.... PE_VERSION=$PE_VERSION
