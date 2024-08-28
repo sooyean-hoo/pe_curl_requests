@@ -138,6 +138,9 @@ function installPkg(){
 	(( which apt-get || apt-get --help ) 2> /dev/null  && {
 		sudo apt-get  install -y $@ || apt-get  install -y $@ ;
 	}) || \
+  (( which dnf  || dnf --help ) 2> /dev/null  && {
+    sudo dnf install -y $@ || dnf install -y $@ ;
+  }) || \
 	(( which yum  || yum --help ) 2> /dev/null  && {
 		sudo yum install -y $@ || yum install -y $@ ;
 	}) || \
@@ -200,6 +203,9 @@ function upgradePkg(){
 	}) || \
 	(( which apt-get || apt-get --help )  &&  { \
 		sudo apt update -y || apt update -y  ; \
+  }) || \
+  (( which dnf  || dnf --help ) 2> /dev/null  && {
+    sudo dnf update -y $@ || dnf update -y $@ ;
   }) || \
   (( which yum  || yum --help )  && {
     sudo yum update -y $@ || yum update -y $@ ;
