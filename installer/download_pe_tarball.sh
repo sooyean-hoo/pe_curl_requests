@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg uninstallPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg uninstallPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        checkSELINUX disableSELINUX    restartCompilersReplicaServices cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -224,6 +224,9 @@ function chkPkg(){
 	((which pacman || pacman --help ) && {
 		sudo pacman -Q $@ ||  pacman -Q $@  ;
 	}) || \
+  (( which yum  || yum --help )  && {
+    sudo yum whatprovides $@ ||yum whatprovides $@ ;
+  }) || \
 	((which apt-cache || apt-cache --help )  && {
 		sudo apt-cache search  $@ | grep install ||  apt-cache search  $@ | grep install ;
 	}) || \
@@ -521,6 +524,41 @@ function installrbenv(){
 
         cd "$(rbenv root)"/plugins/ruby-build && pwd && ls -l
         echo  ====RBbuild Installed===========  
+}
+function checkSELINUX(){
+  echoMeNRun sudo getenforce
+  echoMeNRun sudo sestatus
+  echoMeNRun cat /etc/selinux/config
+}
+function disableSELINUX(){
+  echoMsg BEFORE
+  checkSELINUX
+  echoMeNRun sudo setenforce 0 || sudo setenforce 0
+  sudo setenforce Disabled || sudo setenforce 0 ||   setenforce Disabled ||  setenforce 0
+  echoMeNRun "sudo sed -E -i 's/SELINUX=.+\$/SELINUX=disabled/g'  /etc/selinux/config" || \
+  eval       "sudo sed -E -i 's/SELINUX=.+\$/SELINUX=disabled/g'  /etc/selinux/config"
+  echoMsg AFTER
+  checkSELINUX
+}
+function restartCompilersReplicaServices(){
+	#systemctl status | egrep pe- | sed -E 's/^.+(pe-[^.]+).+$/\1/g' | egrep  ^pe-[^[]  | xargs -L1 echo sudo systemctl restart
+
+	cd /tmp
+
+	systemctl status | grep  puppet
+	systemctl stop puppet
+	systemctl status | grep pe-
+	systemctl stop puppet
+	systemctl stop pe-orchestration-services
+	systemctl stop pe-puppetserver
+	systemctl stop pe-puppetdb
+
+	systemctl start pe-puppetdb
+	systemctl start pe-puppetserver
+	systemctl start pe-orchestration-services
+	systemctl start puppet
+
+	netstat -apn  | grep \ LISTEN| grep -E '4433|8081|814|8140'
 }
 function cleanse_dlPEConsole(){
 
