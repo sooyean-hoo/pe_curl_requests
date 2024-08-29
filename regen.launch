@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.ui.externaltools.ProgramLaunchConfigurationType">
+    <stringAttribute key="bad_container_name" value="PDKValidate"/>
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
+    <mapAttribute key="org.eclipse.debug.core.environmentVariables">
+        <mapEntry key="HOME" value="/Users/valente"/>
+        <mapEntry key="LC_CTYPE" value="UTF-8"/>
+        <mapEntry key="LOGNAME" value="valente"/>
+        <mapEntry key="PATH" value="/Users/valente/.rbenv/shims:/usr/local/sbin:/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/puppetlabs/bin:/opt/X11/bin:/Users/valente/bin:/usr/local/bin/:/opt/puppetlabs/pdk/bin/"/>
+        <mapEntry key="SHELL" value="/bin/zsh"/>
+        <mapEntry key="TMPDIR" value="/var/folders/tx/dwd87c0d62vb0m5tpgh7rmwc0000gt/T/"/>
+    </mapAttribute>
+    <listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+        <listEntry value="org.eclipse.ui.externaltools.launchGroup"/>
+    </listAttribute>
+    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="/usr/bin/make"/>
+    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-k regen"/>
+    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/pe_curl_requests}"/>
+</launchConfiguration>
