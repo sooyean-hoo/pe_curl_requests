@@ -224,8 +224,8 @@ function chkPkg(){
 	((which pacman || pacman --help ) && {
 		sudo pacman -Q $@ ||  pacman -Q $@  ;
 	}) || \
-  (( which yum  || yum --help )  && {
-    sudo yum whatprovides $@ ||yum whatprovides $@ ;
+  (( which rpm  || prm --help )  && {
+    sudo rpm -qa $@ || rpm -qa $@ ;
   }) || \
 	((which apt-cache || apt-cache --help )  && {
 		sudo apt-cache search  $@ | grep install ||  apt-cache search  $@ | grep install ;
