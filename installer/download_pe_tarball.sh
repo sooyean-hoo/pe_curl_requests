@@ -1,12 +1,12 @@
 #!/bin/bash
 
-valentepuppetcmd="${HOME}/mym/valentepuppet/tasks/puppet_tasks_sh.ps1"
+valentepuppetcmd="${HOME}/mym/valentepuppet/tasks/puppet_tasks_sh_rb.ps1"
 function regen(){
   regenfns=./.`basename $0`.regenfns.dat ;
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg uninstallPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        checkSELINUX disableSELINUX    restartCompilersReplicaServices cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse ; do 
+  for fname in  echoMeNRun  catMe  echoMsg installPkg uninstallPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        checkSELINUX disableSELINUX    restartCompilersReplicaServices cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse MDtabletoPropHashFile ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -159,10 +159,10 @@ function uninstallPkg(){
     sudo pacman -Rn  --noconfirm $@  || pacman -Rn  --noconfirm $@  ;
   }) || \
   (( which apt  || apt --help ) 2> /dev/null  && {
-    sudo apt uninstall -y $@ || apt uninstall -y $@ ;
+    sudo apt remove -y $@ || apt remove -y $@ ;
   }) || \
   (( which apt-get || apt-get --help ) 2> /dev/null  && {
-    sudo apt-get  uninstall -y $@ || apt-get  uninstall -y $@ ;
+    sudo apt-get  remove -y $@ || apt-get  remove -y $@ ;
   }) || \
   (( which yum  || yum --help ) 2> /dev/null  && {
     sudo yum remove -y $@ || yum remove -y $@ ;
@@ -691,6 +691,10 @@ __END
 
 
 
+	  
+	  ## Preprocessing of the installPEConsole.SETVALUES.txt, due to a host verification intro in the Puppet See ref:  https://portal.perforce.com/s/article/000005530
+	  installPEaddKnownHost ${tmpDir}/installPEConsole.SETVALUES.txt ;
+	  
 	  [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] && source  ${tmpDir}/installPEConsole.SETVALUES.txt  && catMe  ${tmpDir}/installPEConsole.SETVALUES.txt ;
 ############### PECONF.TEMPLATE
 #  "pe_install::puppet_master_dnsaltnames": dnsaltnames
@@ -699,6 +703,7 @@ __END
 #  "puppet_enterprise::profile::master::r10k_private_key": gitKey
 #  "console_admin_password": adminpasswd
 #
+#  "puppet_enterprise::profile::master::r10k_known_hosts"
 #  "puppet_enterprise::puppet_master_host"
 #  "pe_install::install::classification::pe_node_group_environment"
 #  "puppet_enterprise::ipv6_only"
@@ -739,7 +744,7 @@ __END
 
 		  confpropname="$( grep   ": $commonvalue"   $0 | sed -E 's/: .+$//g'| tr -d '# ' )"
 		  if [ -z "$confpropname" ] ; then
-		    confpropname="$(    grep '::'$commonvalue'"' ./puppet_tasks_sh.ps1 | sed -E 's/: .+$//g'| tr -d '# '         )"
+		    confpropname="$(    grep '::'$commonvalue'"' ./puppet_tasks_sh_rb.ps1 | sed -E 's/: .+$//g'| tr -d '# '         )"
 		  fi;
 
 		  echoMsg '==' "Running.... /opt/puppetlabs/installer/bin/hocon -f $conftmp set         '${confpropname}'   `set |grep ${commonvalue}= | sed -E s/^.+=// | head -1`  "
@@ -1224,6 +1229,59 @@ function rungithubactionuse(){
   grep -A2 runs: ./action.yml  | cut -d: -f2 | tr '\n'  ' ' | sed -E 's/node20/node/g' | bash -
 
   
+}
+function MDtabletoPropHashFile(){
+    [ "$1" = "-" ] && shift ;
+
+	file2extract="$1" #= './info.txt'
+	tableprefix="$2" # 'For Phase 2,'
+	ESCAPEVALUES=${ESCAPEVALUES:-true}
+
+	[ -z "$file2extract" ] && echo "Missing input MD file" && exit 0;
+	[ -z "$tableprefix" ] && echo "Missing Table title in  MD file" && exit 0;
+
+	outputfile="${3:-/tmp/output.csv}$tmpfile"
+
+	columnkey=${4:-2}
+	columnvalue=${5:-3}
+
+	echo "==Reading $file2extract and extract Table Prefixed by \"$tableprefix\" and output to $outputfile"
+
+	ofile="${outputfile}"
+	[ "$outputfile" = 'tee'  ] || outputfile="cat > ${outputfile}"
+
+  tmpfile="${ofile}.$$.tmp"
+
+  grep -E -m1 -A1000 "$tableprefix"  "${file2extract}"  | grep -E -B1000 -m2 '^$' > $tmpfile
+  [ ! -z "`cat $tmpfile`" ] ||  grep -E -m1 -A1000 "$tableprefix"  "${file2extract}"    > $tmpfile
+
+	if [ "true" = "${ESCAPEVALUES}" ] ; then
+		cat ${tmpfile}  | \
+		  grep -v ':----' | grep -v "$tableprefix" | \
+			sed -E 's/[ ]+/ /g' | eval "  awk -F '|' '{print \$${columnkey}\"=\x27\"\$${columnvalue}\"\x27;\"}'  " \
+			| grep -E -v '^[ ]*='  \
+			\
+			| tr '\t' ' ' | sed -E "s/'[ ]+/'/g" | sed -E "s/[ ]+'/'/g"  \
+			| tr '()/' _ \
+			|  while read line ; do key=${line//=*/}  ; val=${line//*=/} ; echo "`echo ${key// /} | tr  ':-' '_'`=$val" ; done \
+			| eval "$outputfile"
+	else
+		cat ${tmpfile} | \
+		  grep -v ':----' | grep -v "$tableprefix" | \
+			sed -E 's/[ ]+/ /g' | eval "  awk -F '|' '{print \$${columnkey}\"=\x27\"\$${columnvalue}\"\x27;\"}'  " \
+			| grep -E -v '^[ ]*=' \
+			\
+			| sed -E 's/[ ]+=/=/' \
+			| sed -E 's/=[ ]+/=/' \
+			| eval "$outputfile"
+			
+			#		    |  while read line ; do key=${line//=*/}  ; val=${line//*=/} ; echo "`echo ${key// /} | tr  ':-' '_'`=$val" ; done \
+
+	fi;
+    rm -fr $tmpfile
+
+	[ -e "${ofile}" ] &&  ls -l "$ofile"
+
 }
 function puppet_PuppetEntreprise_download(){
 	# tmpDir=""
