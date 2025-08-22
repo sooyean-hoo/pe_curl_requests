@@ -6,7 +6,7 @@ function regen(){
   echo regenfns=$regenfns= 1>&2 ;
   echo > $regenfns
   
-  for fname in  echoMeNRun  catMe  echoMsg installPkg uninstallPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        checkSELINUX disableSELINUX    restartCompilersReplicaServices cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse MDtabletoPropHashFile ; do 
+  for fname in  echoMeNRun  catMe  echoMsg updatestatus progressbarBG progressbarColorTextMoving wipediskfree progressbarzenity  installPkg uninstallPkg addrepoPkg upgradePkg chkPkg custom_puppet_configuration dlPEConsole_SetParameters  dlPEConsole installrbenv        checkSELINUX disableSELINUX    restartCompilersReplicaServices cleanse_dlPEConsole installPEConsole ping_NC_Test  getValueHashTags runChain runlogged installnvm rungithubactionuse MDtabletoPropHashFile ; do 
       echo "function $fname(){" >> $regenfns
       ${valentepuppetcmd} showFNCMDs - $fname | grep -E -v  '^====' >> $regenfns
       echo "}" >> $regenfns
@@ -121,6 +121,111 @@ function echoMsg(){
     msg=" $@ "
 	fi;
 	echo -e "$prefix$msg$postfix"
+}
+function updatestatus(){
+  # [ -z "$DEBUG" ] ||  echo "=====COLUMNS=${COLUMNS}===="
+  COLUMNS=${COLUMNS:-`tput cols`}
+  COLUMNS=${COLUMNS:-190}
+    COLUMNS_LIMIT=$(( COLUMNS - 5 )) ; # 150
+
+  if [ -z "$1" ] ; then
+      #WIP DISABLED FOR NOW:::::: echo -e '\033[?47l' # restore screen
+      printf "\\r" >&2   ;
+    #WIP DISABLED FOR NOW:::::: elif [ "$1" = "@START@" ] ; then
+      #WIP DISABLED FOR NOW:::::: echo -e '\033[?47h' # save screen
+    #WIP DISABLED FOR NOW:::::: elif [ "$1" = "@END@" ] ; then
+      #WIP DISABLED FOR NOW:::::: echo -e '\033[?47l' # restore screen
+  else
+      #WIP DISABLED FOR NOW:::::: echo -e '\033[?47l' # restore screen
+    in_msg=`echo "$@                                                                                                                                                                                                                                                                                                                                                   " | cut -c1-${COLUMNS_LIMIT}`
+    printf "\\r${in_msg}" >&2
+    printf "\\r" >&2
+  fi;
+}
+function progressbarBG(){
+  curIndex=$1 ; shift ;
+  fullIndex=$1 ; shift ;
+  indicator=$1 ; shift ; if [ "-" = "$indicator" ] ; then indicator="" ; fi ;
+
+  [ -z "$DEBUG" ] ||  echo "===curIndex=$curIndex="
+  [ -z "$DEBUG" ] ||  echo "===fullIndex=$fullIndex="
+  [ -z "$DEBUG" ] ||  echo "===indicator=$indicator="
+  
+  m="$@";
+  msgleng="${#m}" ;
+  [ -z "$DEBUG" ] ||  echo "===msgleng=$msgleng="
+  
+  pccurIndex=$(( $curIndex *   $msgleng /  $fullIndex      )) 
+  [ -z "$DEBUG" ] ||  echo "===pccurIndex=$pccurIndex="
+  
+  if [ ${pccurIndex:-0} -gt ${msgleng}  ] ; then
+    pccurIndex=${msgleng} ;
+  fi;
+
+  echo "${m:0:${pccurIndex}}${indicator}${m:$pccurIndex }"
+}
+function progressbarColorTextMoving(){
+  curIndex=${1:-10} ; 
+  fullvalue=${2:-10} ; 
+  barperunit=${3:-10} ;
+  datatxt=${4:-$curIndex Secs Left} ;
+  undonecolour=${5:-${BG_BWHITE}}
+  donecolour=${6:-${RESET}}
+  if [ $curIndex -le 0 ] ; then
+    curIndex=1 ;
+  fi ;
+  workingbar="=======================================================================================================================================================================================================" ;
+  donebar="                                                                                                                                                                                                          " ;
+  updatestatus "[${undonecolour}`echo "${workingbar}" | cut -c1-$(( curIndex * barperunit ))`${RESET} ${datatxt} ${donecolour}`echo "${donebar}" | cut -c1-$(( ( fullvalue - curIndex ) * barperunit + 1 ))`${RESET}]" ;
+}
+function wipediskfree(){
+  n=0
+  flagprefix="dw$$";
+  dfree=$( expr  `df -k ./ | tail -1 | awk -F' ' '{print $4}'` / 1024 / 1024 )
+  unitn=$((  100 / $dfree ))
+  df -k ./ | tail -1 | sed -E 's/^[^ ]+ //g' | sed -E 's/%.+$//g' ;
+  echo >  $PWD/l_${flagprefix}_000 ; sleep 3 ;
+  (while [  ! -z "`ls -1 $PWD/l_${flagprefix:-*}_*`" ] ; do
+    dfreePC=$(  df -k ./ | tail -1 | sed -E 's/^[^ ]+ //g' | sed -E 's/%.+$//g'  | awk -F' ' '/[ ]+[0-9]+[ ]+[0-9]+[ ]+[0-9]+[ ]+[0-9]+/{print $4$5 ; next; } /^[^0-9]/{print "#"$0  ; next;  } {print}'    ) ;
+    updatestatus "`df -k ./ | tail -1 | sed -E 's/^[^ ]+ //g' | sed -E 's/%.+$//g' `"   ;
+    echo ${dfreePC} ;
+    sleep 5 ;
+  done  | grep -v -E '^100$' ) &
+  for  d in `seq 0 $dfree ` ; do
+      dd if=/dev/random of=$PWD/l_${flagprefix}_$(date +%N)  bs=1024k   count=1024  |  xargs -L1 echo  "#" &
+      # instanceMax=10   multiProcessingWaitGate dd > /dev/null  2> /dev/null  ;
+      sleep 1 ;
+      n=$(( $n + $unitn  ))  ;
+      df -k ./ | tail -1 | sed -E 's/^[^ ]+ //g' | sed -E 's/%.+$//g' ;
+      echo $n | grep -v '0';
+  done ;
+  wait ;
+  rm -fr  $PWD/l_${flagprefix}_* ;
+  updatestatus "                                       " ;
+  updatestatus "#===DATA WIPE DONE== " ;
+  echo 100 ;
+}
+function progressbarzenity(){
+  if [ -e "$1" ] ; then
+    title="$( head -1  "$1" )"
+    tmpfile="$1" ; 
+  else
+    title="$@" ;
+    tmpfile=${tmpfile:-`mktemp`} ;
+    echo "$title" >> ${tmpfile}
+  fi ;
+  touch ${tmpfile} ;
+  echo "tee -a  ${tmpfile} " ;
+  tail -f ${tmpfile} | grep -E '^[#]|^[0-9]{1,3}$' | zenity --progress \
+      --title="${title}" \
+      --text="Establishing datalink..." \
+      --percentage=0  \
+      --auto-close \
+      --auto-kill \
+      --time-remaining \
+      --width=500 \
+       &>/dev/null &
+  sleep 3 ;
 }
 function installPkg(){
     ((which paru || paru --help ) 2> /dev/null && {
@@ -411,6 +516,7 @@ function dlPEConsole_SetParameters(){
 	echoMsg :: Final PE_VERSION=$PE_VERSION
 	echoMsg :: Final ARCH=$ARCH
 	echoMsg :: Final DIST=$DIST
+	echoMsg :: Final VERSION=$VERSION
 	echoMsg :: Final rel=$VERSION
 }
 function dlPEConsole(){
@@ -548,6 +654,7 @@ function restartCompilersReplicaServices(){
 	systemctl status | grep  puppet
 	systemctl stop puppet
 	systemctl status | grep pe-
+	
 	systemctl stop puppet
 	systemctl stop pe-orchestration-services
 	systemctl stop pe-puppetserver
@@ -675,7 +782,7 @@ function installPEConsole(){
 
 
   if [[  $stageflags  =~ =SETHOCONFVALUES= ]]  ; then
-    if [ -e ${tmpDir}/installPEConsole.SETVALUES.conf ] ; then
+    if [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] ; then
       echoMsg ++ ====SETHOCONFVALUES====
 #	[ -e ${tmpDir}/installPEConsole.SETVALUES.conf ] && source  ${tmpDir}/installPEConsole.SETVALUES.conf  && catMe  ${tmpDir}/installPEConsole.SETVALUES.conf ;
 
@@ -684,8 +791,12 @@ function installPEConsole(){
 
   	  installer=$PWD/$(find -iname '*-installer')
       cd $(dirname "$installer" )
+      
+      [ -d /opt/puppetlabs/installer ] || \
+      yes  | $installer -p || \
   	  sudo su - << __END
- $installer -y -p
+  	  chmod a+x  $installer ; 
+ yes	| $installer -p
 __END
 		echoMsg '==' $installer -y -p
 
@@ -698,19 +809,53 @@ __END
 	  [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] && source  ${tmpDir}/installPEConsole.SETVALUES.txt  && catMe  ${tmpDir}/installPEConsole.SETVALUES.txt ;
 ############### PECONF.TEMPLATE
 #  "pe_install::puppet_master_dnsaltnames": dnsaltnames
-#  "puppet_enterprise::profile::master::r10k_remote": gitURL
-#  "puppet_enterprise::profile::master::code_manager_auto_configure": codeMgrConf
+#  "puppet_enterprise::profile::master::r10k_known_hosts"
 #  "puppet_enterprise::profile::master::r10k_private_key": gitKey
+#  "puppet_enterprise::profile::master::r10k_remote": gitURL
+#  "puppet_enterprise::profile::master::r10k_postrun
+#  "puppet_enterprise::profile::master::code_manager_auto_configure": codeMgrConf
 #  "console_admin_password": adminpasswd
 #
-#  "puppet_enterprise::profile::master::r10k_known_hosts"
 #  "puppet_enterprise::puppet_master_host"
 #  "pe_install::install::classification::pe_node_group_environment"
 #  "puppet_enterprise::ipv6_only"
 #  "puppet_enterprise::master::recover_configuration::pe_environment"
+
 #  "puppet_enterprise::profile::certificate_authority"
+#  "puppet_enterprise::profile::master::ca_host"
+#  "puppet_enterprise::profile::master::ca_port"
+#  "puppet_enterprise::profile::master::enable_ca_proxy"
+
 #  "puppet_enterprise::profile::master::check_for_updates"
+#  "puppet_enterprise::profile::master::classifier_client_certname"
+#  "puppet_enterprise::profile::master::classifier_host"
+#  "puppet_enterprise::profile::master::classifier_port"
+#  "puppet_enterprise::profile::master::classifier_url_prefix"
+#  "puppet_enterprise::profile::master::console_client_certname"
+#  "puppet_enterprise::profile::master::console_host"
+#  "puppet_enterprise::profile::master::console_server_certname"
+#  "puppet_enterprise::profile::master::orchestrator_client_certname"
+#  "puppet_enterprise::profile::master::master_of_masters_certname"
+#  "puppet_enterprise::profile::master::dashboard_port"
 #  "puppet_enterprise::profile::master::r10k_known__hosts"
+#  "puppet_enterprise::profile::master::enable_future_parser"
+#  "puppet_enterprise::profile::master::facts_terminus"
+#  "puppet_enterprise::profile::master::java_args"
+#  "puppet_enterprise::profile::master::disable_string_deduplication"
+#  "puppet_enterprise::profile::master::localcacert"
+#  "puppet_enterprise::profile::master::trusted_infra_cacert"
+#  "puppet_enterprise::profile::master::java_keystore_passwd"
+#  "puppet_enterprise::profile::master::manage_symlinks"
+#  "puppet_enterprise::profile::master::metrics_enabled"
+#  "puppet_enterprise::profile::master::metrics_graphite_enabled"
+#  "puppet_enterprise::profile::master::metrics_graphite_host"
+#  "puppet_enterprise::profile::master::metrics_graphite_port"
+#  "puppet_enterprise::profile::master::metrics_graphite_update_interval_seconds"
+#  "puppet_enterprise::profile::master::metrics_puppetserver_metrics_allowed"
+#  "puppet_enterprise::profile::master::metrics_jmx_enabled"
+#  "puppet_enterprise::profile::master::metrics_server_id"
+#  "puppet_enterprise::profile::master::puppetdb_host"
+#  "puppet_enterprise::profile::master::puppetdb_port"
 #  "puppet_enterprise::profile::console::classifier_synchronization_period"
 #  "puppet_enterprise::profile::console::ldap_sync_period_seconds"
 #  "puppet_enterprise::profile::console::ldap_cipher_suites"
@@ -731,6 +876,11 @@ __END
 #  "puppet_enterprise::api_port"
 #  "puppet_enterprise::console_services::no_longer_reporting_cutoff"
 #
+#  "puppet_enterprise::profile::database::encoding"
+#  "puppet_enterprise::profile::database::locale"
+#  "puppet_enterprise::profile::database::ctype"
+#  "puppet_enterprise::profile::database::collate"
+#
 #####################
 
       conftmp=`mktemp`
@@ -739,22 +889,42 @@ __END
       #cp  ${tmpDir}/installPEConsole.SETVALUES.conf   $conftmp
       cat  $peconf > $conftmp
 
+	  echo "....Processing ${tmpDir}/installPEConsole.SETVALUES.txt" ...
 	  cat ${tmpDir}/installPEConsole.SETVALUES.txt |sed -E 's/;/\n/g'| sed -E 's/=.+$//g'| tr -d ' ' | while read commonvalue ; do
-		  [ -z   "`set |grep $commonvalue | sed -E 's/^.+=//'`" ] && continue
+		  echo ".........SETHOCONFVALUES==commonvalue=$commonvalue="
 
+		  [ -z   "`set | grep $commonvalue | sed -E 's/^.+=//'`" ] && continue
+
+		  
 		  confpropname="$( grep   ": $commonvalue"   $0 | sed -E 's/: .+$//g'| tr -d '# ' )"
 		  if [ -z "$confpropname" ] ; then
-		    confpropname="$(    grep '::'$commonvalue'"' ./puppet_tasks_sh_rb.ps1 | sed -E 's/: .+$//g'| tr -d '# '         )"
+		    confpropname="$(    grep '::'$commonvalue'"' $0  | sed -E 's/: .+$//g'| tr -d '# '         )"
 		  fi;
-
+      if [ -z "$confpropname" ] ; then
+        echo "=========Skip==commonvalue=${commonvalue}===="
+      fi
 		  echoMsg '==' "Running.... /opt/puppetlabs/installer/bin/hocon -f $conftmp set         '${confpropname}'   `set |grep ${commonvalue}= | sed -E s/^.+=// | head -1`  "
 		        echo "/opt/puppetlabs/installer/bin/hocon -f $conftmp set         '${confpropname}'   `set |grep ${commonvalue}= | sed -E s/^.+=// | head -1`  "  | bash -
 
 	  done;
 
-	  catMe $conftmp
+	  catMe $conftmp ;
+	  echoMeNRun sudo mv -f  $conftmp 	$peconf.NEWCONF and finally..... || cat  $conftmp >  $peconf.NEWCONF
+	  catMe $peconf.NEWCONF
+	  
+	  cat  $peconf >   $peconf.NOHOCONF.conf ;
+	  cat $peconf.NEWCONF > $peconf  ;
 
-	  echoMeNRun sudo mv -f  $conftmp 	$peconf.NEWCONF || cat  $conftmp >  $peconf.NEWCONF
+    if [ ! -z "$peconfcopy" ] ; then 
+      pushd $PWD ;
+      echo "Since peconfcopy = \"$peconfcopy\" , Copying  $conftmp ... to ...  $peconfcopy \"" ;
+      
+      cd `dirname $peconfcopy `;
+      cat $conftmp > `basename $peconfcopy`  ;
+      
+      ls -l $peconfcopy || eval "ls -l $peconfcopy" 
+      popd ;  
+   fi;
 
 	 cd ${tmpDir}
 	 test 0`mount  | grep noexec | grep  ${tmpDir} | wc -l ` -gt 0 && cd /var/tmp/
@@ -826,21 +996,24 @@ __END
 
 
   sudo su - << __END
-  mkdir -p $(dirname "$gitKey" )
-  cp ${srcgitKey}  $(dirname "$gitKey" )
-  cd $(dirname "$gitKey" )
-  mv $(basename ${srcgitKey}) ./ $(basename "$gitKey" )
+  mkdir -p $(dirname "${gitKey//\"/}" )
+  cp ${srcgitKey}  $(dirname "${gitKey//\"/}" )
+  cd $(dirname "${gitKey//\"/}" )
+  mv $(basename ${srcgitKey}) ./ $(basename "${gitKey//\"/}" )
 
-    eval "   cp $srcgitKey $gitKey "
-    eval "   chown pe-puppet:pe-puppet  $gitKey "
-    eval "ls -l  $gitKey"
+    eval "   cp $srcgitKey ${gitKey//\"/} "
+    eval "   chown pe-puppet:pe-puppet  ${gitKey//\"/} "
+    eval "ls -l  ${gitKey//\"/}"
 
   exit
 __END
 
-  sudo mkdir -p $(dirname "$gitKey" )
-  cp ${srcgitKey}  $(dirname "$gitKey" )
-  mv $(basename ${srcgitKey}) ./ $(basename "$gitKey" )
+  echo\
+  sudo mkdir -p $(dirname "${gitKey//\"/}" )
+
+  sudo mkdir -p $(dirname "${gitKey//\"/}" )
+  cp ${srcgitKey}  $(dirname "${gitKey//\"/}" )
+  mv $(basename ${srcgitKey}) ./ $(basename "${gitKey//\"/}" )
 
 	eval "sudo ls -l ${srcgitKey//\"/} " > /dev/null ; errorid=$? ;
 	sudo ls -l  ${srcgitKey//\"/} > /dev/null ;
@@ -1039,14 +1212,18 @@ function ping_NC_Test(){
     ncOpt="" ;
     portType="TCP"
 
-    ip_=$1 ;
+    ip_=${1//*@/} ;
+    ip_name=${1//@*/} ;
+    ip_=${ip_:-$ip_name} ;
+
+    
     echoMsg '==' "Quick Check access from Bolt"
     echoMeNRun ping -W10 -c3 $ip_  ||
     (
     	echoMsg ping -W10 -c3 $ip_
     	ping -W10 -c3 $ip_
     );
-    echoMsg '==' "=="
+    echoMsg '==' "=UDP/TCP=to=${ip_name}=${ip_}=" ;
 
     shift ;
 
@@ -1069,30 +1246,33 @@ function ping_NC_Test(){
           [  "x$1" = "xtcp" -o  "x$1" = "xudp"    ] && defaultPorts="$@"
 
           for port in   $defaultPorts ;  do
-              #echo =====nc  -zv -w30 $ncOpt $ip_ $port===$port ;
+              test -z "$DEBUG" || echo =====nc  -zv -w30 $ncOpt $ip_ $port===$port ;
               name="" ;
               if [[    $port =~ :  ]]  ;  then
               	#echo $port | IFS=:  read port name ;
               	name=`echo $port | cut -d: -f2 ` ;
               	port=`echo $port | cut -d: -f1 `
               fi;
-              #echo =============$port==$name=====
-              [ -z "$name" ] || name=" for ================ $name" ;
+              test -z "$DEBUG" || echo ============port=$port==name=$name=====
+              [ -z "$name" ] || name=" for ~~~~~~~~~~~~~~~~ $name" ;
 
               curtag="@$port$ip_:$port@"
 
               if [[  $checkedPairs =~ $curtag    ]] ; then
-                echoMsg '++' "================================================SKIPPED"   > /dev/null   # For Debugging
+                test -z "$DEBUG" || echoMsg '++' "================================================SKIPPED"   # > /dev/null   # For Debugging
               else
-                checkedPairs="@$checkedPairs$curtag"
 
                 if  [ "$port" = "udp" ] ; then
                     ncOpt="-u" ;
                     portType="UDP" ;
+                    test -z "$DEBUG" || echo =Settings===========portType=$portType=ncOpt=$ncOpt=====
                 elif  [ "$port" = "tcp" ] ; then
                     ncOpt="" ;
                     portType="TCP" ;
+                    test -z "$DEBUG" || echo =Settings===========portType=$portType=ncOpt=$ncOpt=====
                 else
+                  checkedPairs="@$checkedPairs$curtag"
+                  
                   #echo nc  -zv -w30 $ncOpt $ip_ $port  ;
                   outputf=`mktemp`
 # Too Complex to Debug.... Simplifying now                  
@@ -1135,7 +1315,7 @@ function ping_NC_Test(){
 
                   if  [ ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  ] ; then 
 	                  echo  "OPEN   $portType : $ip_ $port : OPEN   $portType $name : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )" ;
-	              else
+	                else
     	              echo  "CLOSED $portType : $ip_ $port : CLOSED $portType       : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )" ;
                   fi;
                  
@@ -1165,6 +1345,10 @@ function runChain(){
 	#echo d=$d    1=$1
 
 	paras="$@";
+	
+  echo "${BYELLOW}@@@ Command Chain @@@${RESET} /g" >&2
+	echo "${paras}" | sed -E "s/@/\n\t${BYELLOW}@${RESET} /g" >&2
+	
 	while [ ! -z "$paras"  ]  ; do
 
 		if [ "$1" = "$d"  ] ; then
