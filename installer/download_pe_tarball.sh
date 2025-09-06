@@ -150,14 +150,14 @@ function progressbarBG(){
   [ -z "$DEBUG" ] ||  echo "===curIndex=$curIndex="
   [ -z "$DEBUG" ] ||  echo "===fullIndex=$fullIndex="
   [ -z "$DEBUG" ] ||  echo "===indicator=$indicator="
-  
+
   m="$@";
   msgleng="${#m}" ;
   [ -z "$DEBUG" ] ||  echo "===msgleng=$msgleng="
-  
-  pccurIndex=$(( $curIndex *   $msgleng /  $fullIndex      )) 
+
+  pccurIndex=$(( $curIndex *   $msgleng /  $fullIndex      ))
   [ -z "$DEBUG" ] ||  echo "===pccurIndex=$pccurIndex="
-  
+
   if [ ${pccurIndex:-0} -gt ${msgleng}  ] ; then
     pccurIndex=${msgleng} ;
   fi;
@@ -165,8 +165,8 @@ function progressbarBG(){
   echo "${m:0:${pccurIndex}}${indicator}${m:$pccurIndex }"
 }
 function progressbarColorTextMoving(){
-  curIndex=${1:-10} ; 
-  fullvalue=${2:-10} ; 
+  curIndex=${1:-10} ;
+  fullvalue=${2:-10} ;
   barperunit=${3:-10} ;
   datatxt=${4:-$curIndex Secs Left} ;
   undonecolour=${5:-${BG_BWHITE}}
@@ -208,7 +208,7 @@ function wipediskfree(){
 function progressbarzenity(){
   if [ -e "$1" ] ; then
     title="$( head -1  "$1" )"
-    tmpfile="$1" ; 
+    tmpfile="$1" ;
   else
     title="$@" ;
     tmpfile=${tmpfile:-`mktemp`} ;
@@ -251,7 +251,7 @@ function installPkg(){
 	}) || \
   (( which zypper  || zypper --help ) 2> /dev/null  && {
     sudo zypper install -y -l $@ || zypper install -y -l $@ ;
-  }) 
+  })
 }
 function uninstallPkg(){
     ((which paru || paru --help ) 2> /dev/null && {
@@ -274,7 +274,7 @@ function uninstallPkg(){
   }) || \
   (( which zypper  || zypper --help ) 2> /dev/null  && {
     sudo zypper remove -y   $@ || zypper remove -y  $@ ;
-  }) 
+  })
 }
 function addrepoPkg(){
 #   ((which paru || paru --help ) && {
@@ -356,7 +356,7 @@ function custom_puppet_configuration(){
   else
   	puppetCMD=""
   fi
- 
+
   echo  "===puppetCMD=${puppetCMD}"
 
   set | grep -E '^PUPPET_BIN_DIR=|^PUPPET_CONF_DIR=';
@@ -483,6 +483,7 @@ function dlPEConsole_SetParameters(){
   [[ "$PLATFORM_ID$ID_LIKE$ID" =~ rhel ]] && DIST=${DIST:-el}
   [[ "$PLATFORM_ID$ID_LIKE$ID" =~ fedora ]] && DIST=${DIST:-el}
   [[ "$NAME" =~ Scientific ]] && DIST=${DIST:-sles}
+  [[ "$NAME" =~ Amazon ]] && DIST=${DIST:-amazon}
   [[ "$ID" =~ ubuntu ]] && DIST=${DIST:-ubuntu}
 	VERSION=${VERSION:-$VERSION_ID}
 
@@ -606,7 +607,7 @@ function installrbenv(){
   #### rbenv installation
         touch ~/.bash_profile
         touch ~/.bashrc
-        
+
         source ~/.bash_profile
 
         git clone https://github.com/rbenv/rbenv.git ~/.rbenv
@@ -629,7 +630,7 @@ function installrbenv(){
         git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
 
         cd "$(rbenv root)"/plugins/ruby-build && pwd && ls -l
-        echo  ====RBbuild Installed===========  
+        echo  ====RBbuild Installed===========
 }
 function checkSELINUX(){
   echoMeNRun sudo getenforce
@@ -654,7 +655,7 @@ function restartCompilersReplicaServices(){
 	systemctl status | grep  puppet
 	systemctl stop puppet
 	systemctl status | grep pe-
-	
+
 	systemctl stop puppet
 	systemctl stop pe-orchestration-services
 	systemctl stop pe-puppetserver
@@ -791,21 +792,21 @@ function installPEConsole(){
 
   	  installer=$PWD/$(find -iname '*-installer')
       cd $(dirname "$installer" )
-      
+
       [ -d /opt/puppetlabs/installer ] || \
       yes  | $installer -p || \
   	  sudo su - << __END
-  	  chmod a+x  $installer ; 
+  	  chmod a+x  $installer ;
  yes	| $installer -p
 __END
 		echoMsg '==' $installer -y -p
 
 
 
-	  
+
 	  ## Preprocessing of the installPEConsole.SETVALUES.txt, due to a host verification intro in the Puppet See ref:  https://portal.perforce.com/s/article/000005530
 	  installPEaddKnownHost ${tmpDir}/installPEConsole.SETVALUES.txt ;
-	  
+
 	  [ -e ${tmpDir}/installPEConsole.SETVALUES.txt ] && source  ${tmpDir}/installPEConsole.SETVALUES.txt  && catMe  ${tmpDir}/installPEConsole.SETVALUES.txt ;
 ############### PECONF.TEMPLATE
 #  "pe_install::puppet_master_dnsaltnames": dnsaltnames
@@ -895,7 +896,7 @@ __END
 
 		  [ -z   "`set | grep $commonvalue | sed -E 's/^.+=//'`" ] && continue
 
-		  
+
 		  confpropname="$( grep   ": $commonvalue"   $0 | sed -E 's/: .+$//g'| tr -d '# ' )"
 		  if [ -z "$confpropname" ] ; then
 		    confpropname="$(    grep '::'$commonvalue'"' $0  | sed -E 's/: .+$//g'| tr -d '# '         )"
@@ -911,19 +912,19 @@ __END
 	  catMe $conftmp ;
 	  echoMeNRun sudo mv -f  $conftmp 	$peconf.NEWCONF and finally..... || cat  $conftmp >  $peconf.NEWCONF
 	  catMe $peconf.NEWCONF
-	  
+
 	  cat  $peconf >   $peconf.NOHOCONF.conf ;
 	  cat $peconf.NEWCONF > $peconf  ;
 
-    if [ ! -z "$peconfcopy" ] ; then 
+    if [ ! -z "$peconfcopy" ] ; then
       pushd $PWD ;
       echo "Since peconfcopy = \"$peconfcopy\" , Copying  $conftmp ... to ...  $peconfcopy \"" ;
-      
+
       cd `dirname $peconfcopy `;
       cat $conftmp > `basename $peconfcopy`  ;
-      
-      ls -l $peconfcopy || eval "ls -l $peconfcopy" 
-      popd ;  
+
+      ls -l $peconfcopy || eval "ls -l $peconfcopy"
+      popd ;
    fi;
 
 	 cd ${tmpDir}
@@ -1216,7 +1217,7 @@ function ping_NC_Test(){
     ip_name=${1//@*/} ;
     ip_=${ip_:-$ip_name} ;
 
-    
+
     echoMsg '==' "Quick Check access from Bolt"
     echoMeNRun ping -W10 -c3 $ip_  ||
     (
@@ -1272,10 +1273,10 @@ function ping_NC_Test(){
                     test -z "$DEBUG" || echo =Settings===========portType=$portType=ncOpt=$ncOpt=====
                 else
                   checkedPairs="@$checkedPairs$curtag"
-                  
+
                   #echo nc  -zv -w30 $ncOpt $ip_ $port  ;
                   outputf=`mktemp`
-# Too Complex to Debug.... Simplifying now                  
+# Too Complex to Debug.... Simplifying now
 #                   (\
 #      	             ( \
 # 	                  	( \
@@ -1294,31 +1295,31 @@ function ping_NC_Test(){
 # 	                  echo  "OPEN   $portType : $ip_ $port : OPEN   $portType $name : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )"  \
 # 	              ) || \
 #                   echo  "CLOSED $portType : $ip_ $port : CLOSED $portType       : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )"
-                  
-                  
-              	    (( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl0" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10  -k https://$ip_:$port  2>&1 | tee ${outputf} > /dev/null )) 
-              	  
+
+
+              	    (( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl0" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10  -k https://$ip_:$port  2>&1 | tee ${outputf} > /dev/null ))
+
               	  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"           || \
-              	  	((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl1" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10     http://$ip_:$port   2>&1 | tee ${outputf} > /dev/null ))  
-              	  
+              	  	((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl1" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10     http://$ip_:$port   2>&1 | tee ${outputf} > /dev/null ))
+
               	  test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  )         || \
-                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl2" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10     telnet://$ip_:$port 2>&1 | tee ${outputf} > /dev/null ))  
-                  
+                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using curl2" ) && which curl > /dev/null &&  (echo HELO | curl -v --max-time 10 --connect-timeout 10     telnet://$ip_:$port 2>&1 | tee ${outputf} > /dev/null ))
+
                   test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  )         || \
-                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using nc2"   ) && which nc   > /dev/null &&  (echo HELO | nc -v -w30                                    $ncOpt $ip_ $port  2>&1 | tee ${outputf} > /dev/null ))  
-                  
+                    ((( test -z "$DEBUG" || echo -e "\n\n\n+++++Using nc2"   ) && which nc   > /dev/null &&  (echo HELO | nc -v -w30                                    $ncOpt $ip_ $port  2>&1 | tee ${outputf} > /dev/null ))
+
                   test  ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`" )       ||   \
                   	(   \
                   	  ( test -z "$DEBUG" || echo -e "\n\n\n+++++Check Curl and NC installation"   ) && \
                   	  ( echo "curl:$( which curl > /dev/null && echo 'OK' || echo 'NOT installed' )  nc:$( which nc > /dev/null && echo 'OK' || echo 'NOT installed' )" | tee ${outputf} > /dev/null && ( test -z "`grep -i OK ${outputf}`" ) && cat  ${outputf} >&2 && ls -l /aaaaaa/confirmERROR ) \
                     )
 
-                  if  [ ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  ] ; then 
+                  if  [ ! -z "`grep -i -E 'succeeded|Connected to ' ${outputf}`"  ] ; then
 	                  echo  "OPEN   $portType : $ip_ $port : OPEN   $portType $name : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )" ;
 	                else
     	              echo  "CLOSED $portType : $ip_ $port : CLOSED $portType       : $( head -n3 ${outputf} | tr '\n' ';' | cut -c1-100 )" ;
                   fi;
-                 
+
                   test -z "$DEBUG" || catMe $outputf
                   rm -fr $outputf
                 fi;
@@ -1345,10 +1346,10 @@ function runChain(){
 	#echo d=$d    1=$1
 
 	paras="$@";
-	
+
   echo "${BYELLOW}@@@ Command Chain @@@${RESET} /g" >&2
 	echo "${paras}" | sed -E "s/@/\n\t${BYELLOW}@${RESET} /g" >&2
-	
+
 	while [ ! -z "$paras"  ]  ; do
 
 		if [ "$1" = "$d"  ] ; then
@@ -1390,15 +1391,15 @@ function rungithubactionuse(){
     shift ;
   fi;
   actioname=$1 ;
-  
+
   export RUNNER_TEMP=${RUNNER_TEMP:-/tmp}
-  
+
   giturl=${actioname/@*/}
   giturlbase=${giturl/*\//}
   gitbranch=${actioname/*@/}
-  
+
   set | grep -E '^git|RUNNER_TEMP=' ;
-  
+
   cd $RUNNER_TEMP ;
   git clone https://github.com/${giturl}.git
   cd ${giturlbase}
@@ -1412,7 +1413,7 @@ function rungithubactionuse(){
   done ;
   grep -A2 runs: ./action.yml  | cut -d: -f2 | tr '\n'  ' ' | sed -E 's/node20/node/g' | bash -
 
-  
+
 }
 function MDtabletoPropHashFile(){
     [ "$1" = "-" ] && shift ;
@@ -1458,7 +1459,7 @@ function MDtabletoPropHashFile(){
 			| sed -E 's/[ ]+=/=/' \
 			| sed -E 's/=[ ]+/=/' \
 			| eval "$outputfile"
-			
+
 			#		    |  while read line ; do key=${line//=*/}  ; val=${line//*=/} ; echo "`echo ${key// /} | tr  ':-' '_'`=$val" ; done \
 
 	fi;
